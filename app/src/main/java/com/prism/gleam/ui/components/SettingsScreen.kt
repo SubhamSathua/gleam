@@ -37,6 +37,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,15 +59,20 @@ import androidx.core.content.ContextCompat
 import com.prism.gleam.AppConstants
 import com.prism.gleam.ui.theme.GleamTheme
 import com.prism.gleam.ui.theme.ThemeMode
+import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(
     themeMode: ThemeMode,
     isAmoled: Boolean,
     isAutoBrightness: Boolean,
+    minBrightness: Int,
+    maxBrightness: Int,
     onThemeModeChange: (ThemeMode) -> Unit,
     onAmoledChange: (Boolean) -> Unit,
     onAutoBrightnessChange: (Boolean) -> Unit,
+    onMinBrightnessChange: (Int) -> Unit,
+    onMaxBrightnessChange: (Int) -> Unit,
     onNavigatePermissions: () -> Unit,
     onNavigateFeedback: () -> Unit,
     onNavigatePrivacyPolicy: () -> Unit,
@@ -260,35 +267,149 @@ fun SettingsScreen(
             SectionHeader(title = "Display Control")
 
             SettingsCard {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Auto Brightness",
-                            color = colors.textTitle,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Automatically boost screen in direct sunlight",
-                            color = colors.textSub,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 2.dp)
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Auto Brightness",
+                                color = colors.textTitle,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Automatically boost screen in direct sunlight",
+                                color = colors.textSub,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        GleamSwitch(
+                            checked = isAutoBrightness,
+                            onCheckedChange = {
+                                GleamHaptics.playSubtleClick(view)
+                                onAutoBrightnessChange(it)
+                            }
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    GleamSwitch(
-                        checked = isAutoBrightness,
-                        onCheckedChange = {
-                            GleamHaptics.playSubtleClick(view)
-                            onAutoBrightnessChange(it)
+
+                    SettingsDivider()
+
+                    // Minimum Brightness Floor
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Minimum Brightness Floor",
+                                color = colors.textTitle,
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(colors.primaryAccent.copy(alpha = 0.12f))
+                                    .padding(horizontal = 10.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "$minBrightness%",
+                                    color = colors.primaryAccent,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
-                    )
+
+                        Text(
+                            text = "Floor brightness applied in pitch darkness / 0 lx (Default: 10%)",
+                            color = colors.textSub,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 3.dp, bottom = 4.dp)
+                        )
+
+                        Slider(
+                            value = minBrightness.toFloat(),
+                            onValueChange = {
+                                val newMin = it.roundToInt().coerceIn(0, (maxBrightness - 5).coerceAtLeast(0))
+                                onMinBrightnessChange(newMin)
+                            },
+                            valueRange = 0f..50f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = colors.primaryAccent,
+                                activeTrackColor = colors.primaryAccent,
+                                inactiveTrackColor = colors.trackGroove
+                            )
+                        )
+                    }
+
+                    SettingsDivider()
+
+                    // Maximum Brightness Ceiling
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Maximum Boost Ceiling",
+                                color = colors.textTitle,
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(colors.primaryAccent.copy(alpha = 0.12f))
+                                    .padding(horizontal = 10.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "$maxBrightness%",
+                                    color = colors.primaryAccent,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "Peak hardware boost applied in direct sunlight / 35k+ lx (Default: 100%)",
+                            color = colors.textSub,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 3.dp, bottom = 4.dp)
+                        )
+
+                        Slider(
+                            value = maxBrightness.toFloat(),
+                            onValueChange = {
+                                val newMax = it.roundToInt().coerceIn((minBrightness + 5).coerceAtMost(100), 100)
+                                onMaxBrightnessChange(newMax)
+                            },
+                            valueRange = 50f..100f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = colors.primaryAccent,
+                                activeTrackColor = colors.primaryAccent,
+                                inactiveTrackColor = colors.trackGroove
+                            )
+                        )
+                    }
                 }
             }
 

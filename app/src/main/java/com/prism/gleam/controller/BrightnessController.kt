@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import com.prism.gleam.data.GleamPreferences
 import com.prism.gleam.luxToScaleFraction
 import com.prism.gleam.ui.components.RestoreMode
 import com.prism.gleam.ui.components.canWriteSystemSettings
@@ -22,17 +23,23 @@ object BrightnessController {
     private var originalBrightnessVal: Int? = null
 
     /**
-     * Maps ambient light in lux (0..40,000+ lx) directly to Android system brightness (0..255):
-     * - 0 lx (pitch black): 0 (0% minimum screen brightness)
-     * - ~500 lx (indoor room): ~150 (comfortable indoor level)
-     * - >= 35,000 lx (direct intense sunlight): 255 (100% MAXIMUM PEAK HARDWARE BACKLIGHT!)
+     * Maps ambient light in lux (0..40,000+ lx) directly to Android system brightness (0..255)
+     * interpolated between user-configured minimum floor and maximum ceiling (defaults: 10% min, 100% max):
+     * - 0 lx (pitch black): minPercent (e.g. 10% = 26)
+     * - ~500 lx (indoor room): proportional comfortable ambient level
+     * - >= 35,000 lx (direct intense sunlight): maxPercent (e.g. 100% = 255)
      */
-    fun luxToBrightness(lux: Float): Int {
-        if (lux <= 0f) return 0
-        if (lux >= 35000f) return 255
+    fun luxToBrightness(lux: Float, minPercent: Int = 10, maxPercent: Int = 100): Int {
+        val clampedMin = minPercent.coerceIn(0, 100)
+        val clampedMax = maxPercent.coerceIn(clampedMin, 100)
+        val minVal = (clampedMin * 2.55f).roundToInt()
+        val maxVal = (clampedMax * 2.55f).roundToInt()
+
+        if (lux <= 0f) return minVal
+        if (lux >= 35000f) return maxVal
 
         val fraction = luxToScaleFraction(lux)
-        return (fraction * 255).roundToInt().coerceIn(0, 255)
+        return (minVal + fraction * (maxVal - minVal)).roundToInt().coerceIn(minVal, maxVal)
     }
 
     /**
@@ -84,8 +91,10 @@ object BrightnessController {
                 )
             }
 
-            // Compute target brightness: 0 at 0 lx, 255 at >=35k lx
-            val targetBrightness = luxToBrightness(lux)
+            // Compute target brightness based on user's min (default 10%) & max (default 100%)
+            val minPercent = GleamPreferences.getMinBrightness(context)
+            val maxPercent = GleamPreferences.getMaxBrightness(context)
+            val targetBrightness = luxToBrightness(lux, minPercent, maxPercent)
             Settings.System.putInt(
                 resolver,
                 Settings.System.SCREEN_BRIGHTNESS,

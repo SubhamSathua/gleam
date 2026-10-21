@@ -109,8 +109,11 @@ fun GleamAppRoot(
     onThemeModeChange: (ThemeMode) -> Unit,
     onAmoledChange: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     var currentScreen by remember { mutableStateOf(AppScreen.MAIN) }
-    var isAutoBrightness by remember { mutableStateOf(true) }
+    var isAutoBrightness by remember { mutableStateOf(GleamPreferences.isAutoBrightness(context)) }
+    var minBrightness by remember { mutableIntStateOf(GleamPreferences.getMinBrightness(context)) }
+    var maxBrightness by remember { mutableIntStateOf(GleamPreferences.getMaxBrightness(context)) }
 
     AnimatedContent(
         targetState = currentScreen,
@@ -131,9 +134,22 @@ fun GleamAppRoot(
                     themeMode = themeMode,
                     isAmoled = isAmoled,
                     isAutoBrightness = isAutoBrightness,
+                    minBrightness = minBrightness,
+                    maxBrightness = maxBrightness,
                     onThemeModeChange = onThemeModeChange,
                     onAmoledChange = onAmoledChange,
-                    onAutoBrightnessChange = { isAutoBrightness = it },
+                    onAutoBrightnessChange = {
+                        isAutoBrightness = it
+                        GleamPreferences.setAutoBrightness(context, it)
+                    },
+                    onMinBrightnessChange = {
+                        minBrightness = it
+                        GleamPreferences.setMinBrightness(context, it)
+                    },
+                    onMaxBrightnessChange = {
+                        maxBrightness = it
+                        GleamPreferences.setMaxBrightness(context, it)
+                    },
                     onNavigatePermissions = { currentScreen = AppScreen.PERMISSIONS },
                     onNavigateFeedback = { currentScreen = AppScreen.FEEDBACK },
                     onNavigatePrivacyPolicy = { currentScreen = AppScreen.PRIVACY_POLICY },

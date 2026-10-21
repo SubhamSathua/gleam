@@ -15,6 +15,8 @@ object GleamPreferences {
     private const val KEY_RESTORE_MODE = "restore_mode"
     private const val KEY_PREVIOUS_VALUE = "previous_value"
     private const val KEY_CUSTOM_FLOOR = "custom_floor_value"
+    private const val KEY_MIN_BRIGHTNESS = "min_brightness_percent"
+    private const val KEY_MAX_BRIGHTNESS = "max_brightness_percent"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -73,6 +75,23 @@ object GleamPreferences {
 
     fun setCustomFloorValue(context: Context, value: Int) {
         getPrefs(context).edit().putInt(KEY_CUSTOM_FLOOR, value).apply()
+    }
+
+    // Dynamic Range Min & Max (Defaults: min 10%, max 100%)
+    fun getMinBrightness(context: Context): Int {
+        return getPrefs(context).getInt(KEY_MIN_BRIGHTNESS, 10)
+    }
+
+    fun setMinBrightness(context: Context, value: Int) {
+        getPrefs(context).edit().putInt(KEY_MIN_BRIGHTNESS, value.coerceIn(0, 100)).apply()
+    }
+
+    fun getMaxBrightness(context: Context): Int {
+        return getPrefs(context).getInt(KEY_MAX_BRIGHTNESS, 100)
+    }
+
+    fun setMaxBrightness(context: Context, value: Int) {
+        getPrefs(context).edit().putInt(KEY_MAX_BRIGHTNESS, value.coerceIn(0, 100)).apply()
     }
 
     // Notification Shade Quick Tile Request Listening State
