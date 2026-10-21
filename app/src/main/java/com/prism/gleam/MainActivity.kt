@@ -46,10 +46,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
+import com.prism.gleam.controller.BrightnessController
 import com.prism.gleam.data.GleamPreferences
 import com.prism.gleam.shortcut.ToggleShortcutActivity
 import com.prism.gleam.ui.components.AboutScreen
 import com.prism.gleam.ui.components.EnergyPulseOverlay
+import com.prism.gleam.ui.components.FeedbackScreen
 import com.prism.gleam.ui.components.GleamHaptics
 import com.prism.gleam.ui.components.PermissionWarningCard
 import com.prism.gleam.ui.components.PermissionsScreen
@@ -96,7 +98,8 @@ enum class AppScreen {
     SETTINGS,
     PERMISSIONS,
     PRIVACY_POLICY,
-    ABOUT
+    ABOUT,
+    FEEDBACK
 }
 
 @Composable
@@ -132,6 +135,7 @@ fun GleamAppRoot(
                     onAmoledChange = onAmoledChange,
                     onAutoBrightnessChange = { isAutoBrightness = it },
                     onNavigatePermissions = { currentScreen = AppScreen.PERMISSIONS },
+                    onNavigateFeedback = { currentScreen = AppScreen.FEEDBACK },
                     onNavigatePrivacyPolicy = { currentScreen = AppScreen.PRIVACY_POLICY },
                     onNavigateAbout = { currentScreen = AppScreen.ABOUT },
                     onBack = { currentScreen = AppScreen.MAIN }
@@ -149,6 +153,11 @@ fun GleamAppRoot(
             }
             AppScreen.ABOUT -> {
                 AboutScreen(
+                    onBack = { currentScreen = AppScreen.SETTINGS }
+                )
+            }
+            AppScreen.FEEDBACK -> {
+                FeedbackScreen(
                     onBack = { currentScreen = AppScreen.SETTINGS }
                 )
             }
@@ -187,12 +196,20 @@ fun GleamMainScreen(
     var powerToggleTrigger by remember { mutableIntStateOf(0) }
     var currentLux by remember { mutableFloatStateOf(500f) }
     var currentSensorFraction by remember { mutableFloatStateOf(luxToScaleFraction(500f)) }
-    var restoreMode by remember { mutableStateOf(RestoreMode.PREVIOUS) }
-    var previousValue by remember { mutableIntStateOf(59) }
-    var customFloorValue by remember { mutableIntStateOf(50) }
+
+    val initialMode = remember {
+        try {
+            RestoreMode.valueOf(GleamPreferences.getRestoreMode(context))
+        } catch (_: Exception) {
+            RestoreMode.PREVIOUS
+        }
+    }
+    var restoreMode by remember { mutableStateOf(initialMode) }
+    var previousValue by remember { mutableIntStateOf(GleamPreferences.getPreviousValue(context)) }
+    var customFloorValue by remember { mutableIntStateOf(GleamPreferences.getCustomFloorValue(context)) }
     var isSheetVisible by remember { mutableStateOf(false) }
 
-    // Sync with Quick Settings Tile & 1-Tap Home Screen Shortcut
+    // Sync with Quick Settings Tile & 1-Tap Home Screen Shortcut (Single pointer)
     DisposableEffect(context) {
         val receiver = object : android.content.BroadcastReceiver() {
             override fun onReceive(c: Context?, intent: android.content.Intent?) {
@@ -201,6 +218,12 @@ fun GleamMainScreen(
                     if (newPower != isPoweredOn) {
                         isPoweredOn = newPower
                         powerToggleTrigger++
+                        val activity = context as? ComponentActivity
+                        if (newPower) {
+                            BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                        } else {
+                            BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
+                        }
                     }
                 }
             }
@@ -237,7 +260,7 @@ fun GleamMainScreen(
         }
     }
 
-    // Real Android Hardware Ambient Light Sensor (TYPE_LIGHT) - 100% Deterministic & Precise
+    // Real Android Hardware Ambient Light Sensor (TYPE_LIGHT) - 100% Deterministic & Hardware-accurate
     DisposableEffect(lifecycleOwner, isPoweredOn, isPermissionGranted, isAutoBrightness) {
         if (!isPoweredOn || !isPermissionGranted || !isAutoBrightness) {
             return@DisposableEffect onDispose { }
@@ -256,6 +279,17 @@ fun GleamMainScreen(
                     val fraction = luxToScaleFraction(rawLux)
                     currentSensorFraction = fraction
                     previousValue = (fraction * 100).roundToInt()
+                    GleamPreferences.setPreviousValue(context, previousValue)
+
+                    // Execute real hardware sunlight brightness override:
+                    // At 40,000 lx, targetBrightness is 255 (maximum peak hardware boost)
+                    val activity = context as? ComponentActivity
+                    BrightnessController.applySunlightBrightness(
+                        context = context,
+                        activity = activity,
+                        lux = rawLux,
+                        isPoweredOn = isPoweredOn
+                    )
                 }
 
                 override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
@@ -339,13 +373,24 @@ fun GleamMainScreen(
                         powerToggleTrigger++
                         isPoweredOn = willBeOn
                         GleamPreferences.setPoweredOn(context, willBeOn)
-                        if (isPoweredOn) {
+                        val activity = context as? ComponentActivity
+
+                        if (willBeOn) {
                             currentSensorFraction = when (restoreMode) {
                                 RestoreMode.PREVIOUS -> previousValue / 100f
                                 RestoreMode.CUSTOM -> customFloorValue / 100f
                                 RestoreMode.AUTO -> luxToScaleFraction(currentLux)
                             }
+                            BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                        } else {
+                            BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                         }
+
+                        // Sync notification shade Quick Settings tile and send broadcast
+                        GleamPreferences.requestTileUpdate(context)
+                        context.sendBroadcast(
+                            android.content.Intent(GleamPreferences.ACTION_TOGGLE_POWER).setPackage(context.packageName)
+                        )
                     }
                 }
             )
@@ -401,8 +446,14 @@ fun GleamMainScreen(
             currentMode = restoreMode,
             previousValue = previousValue,
             customFloorValue = customFloorValue,
-            onModeSelect = { restoreMode = it },
-            onCustomFloorChange = { customFloorValue = it },
+            onModeSelect = {
+                restoreMode = it
+                GleamPreferences.setRestoreMode(context, it.name)
+            },
+            onCustomFloorChange = {
+                customFloorValue = it
+                GleamPreferences.setCustomFloorValue(context, it)
+            },
             onDismiss = { isSheetVisible = false }
         )
     }

@@ -67,6 +67,7 @@ fun SettingsScreen(
     onAmoledChange: (Boolean) -> Unit,
     onAutoBrightnessChange: (Boolean) -> Unit,
     onNavigatePermissions: () -> Unit,
+    onNavigateFeedback: () -> Unit,
     onNavigatePrivacyPolicy: () -> Unit,
     onNavigateAbout: () -> Unit,
     onBack: () -> Unit,
@@ -360,38 +361,13 @@ fun SettingsScreen(
 
             SettingsCard {
                 Column(modifier = Modifier.padding(vertical = 6.dp)) {
-                    // Send Feedback (Email draft with auto diagnostic info from AppConstants)
+                    // Send Feedback (Dedicated Feedback page with description & email)
                     SettingsActionRow(
                         title = "Send Feedback & Bug Reports",
                         subtitle = "Email the development team with device diagnostics",
                         onClick = {
                             GleamHaptics.playSubtleClick(view)
-                            val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-                            val sensorName = sensorManager?.getDefaultSensor(Sensor.TYPE_LIGHT)?.name ?: "Simulated"
-                            val body = """
-Hi Gleam Maintainers,
-
-[Please write your feedback, suggestion or bug report here]
-
-
---------------------------------
-Device: ${Build.MANUFACTURER} ${Build.MODEL}
-Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
-App Version: ${AppConstants.APP_VERSION} (Build ${AppConstants.APP_BUILD_NUMBER})
-Sensor: $sensorName
---------------------------------
-                            """.trimIndent()
-
-                            val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}")
-                                putExtra(Intent.EXTRA_SUBJECT, "[Gleam Feedback] Bug Report / Feature Request")
-                                putExtra(Intent.EXTRA_TEXT, body)
-                            }
-                            try {
-                                context.startActivity(emailIntent)
-                            } catch (_: Exception) {
-                                Toast.makeText(context, "No email client found (${AppConstants.SUPPORT_EMAIL})", Toast.LENGTH_LONG).show()
-                            }
+                            onNavigateFeedback()
                         }
                     )
 
@@ -495,7 +471,7 @@ private fun SettingsActionRow(
 }
 
 @Composable
-private fun ChevronRight() {
+fun ChevronRight() {
     val colors = GleamTheme.colors
     Canvas(modifier = Modifier.size(14.dp)) {
         val strokeW = 2.dp.toPx()

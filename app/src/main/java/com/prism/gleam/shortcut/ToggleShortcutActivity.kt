@@ -9,7 +9,9 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.prism.gleam.R
+import com.prism.gleam.controller.BrightnessController
 import com.prism.gleam.data.GleamPreferences
+import com.prism.gleam.ui.components.RestoreMode
 import com.prism.gleam.ui.components.canWriteSystemSettings
 
 class ToggleShortcutActivity : Activity() {
@@ -23,19 +25,41 @@ class ToggleShortcutActivity : Activity() {
             return
         }
 
-        val isAutoOn = GleamPreferences.toggleAutoBrightness(this)
-        val statusText = if (isAutoOn) "Auto Sunlight Boost: ON" else "Auto Sunlight Boost: OFF"
+        // Master single pointer toggle (exact same state as Quick Tile and in-app ON/OFF button)
+        val isNowOn = GleamPreferences.togglePoweredOn(this)
+        val statusText = if (isNowOn) "Sunlight Boost: ON" else "Sunlight Boost: OFF"
         Toast.makeText(this, "Gleam: $statusText", Toast.LENGTH_SHORT).show()
 
+        if (isNowOn) {
+            BrightnessController.triggerOneShotSunlightBoost(this)
+        } else {
+            val restoreMode = try {
+                RestoreMode.valueOf(GleamPreferences.getRestoreMode(this))
+            } catch (_: Exception) {
+                RestoreMode.PREVIOUS
+            }
+            BrightnessController.restoreBrightness(
+                this,
+                null,
+                restoreMode,
+                GleamPreferences.getPreviousValue(this),
+                GleamPreferences.getCustomFloorValue(this)
+            )
+        }
+
+        // Notify Quick Settings Tile to refresh state
+        GleamPreferences.requestTileUpdate(this)
+
+        // Notify MainActivity if running
         sendBroadcast(
-            Intent(GleamPreferences.ACTION_TOGGLE_AUTO).setPackage(packageName)
+            Intent(GleamPreferences.ACTION_TOGGLE_POWER).setPackage(packageName)
         )
 
         finish()
     }
 
     companion object {
-        const val SHORTCUT_ID = "gleam_toggle_auto"
+        const val SHORTCUT_ID = "gleam_toggle_sunlight_power"
 
         fun pinShortcutToHomeScreen(context: Context) {
             if (!ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
@@ -51,7 +75,7 @@ class ToggleShortcutActivity : Activity() {
             val pinShortcutInfo = ShortcutInfoCompat.Builder(context, SHORTCUT_ID)
                 .setIcon(IconCompat.createWithResource(context, R.drawable.ic_sun_boost))
                 .setShortLabel("Toggle Gleam")
-                .setLongLabel("Toggle Auto Sunlight Boost")
+                .setLongLabel("Toggle Sunlight Boost ON/OFF")
                 .setIntent(targetIntent)
                 .build()
 

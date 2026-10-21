@@ -8,7 +8,9 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import com.prism.gleam.MainActivity
 import com.prism.gleam.R
+import com.prism.gleam.controller.BrightnessController
 import com.prism.gleam.data.GleamPreferences
+import com.prism.gleam.ui.components.RestoreMode
 import com.prism.gleam.ui.components.canWriteSystemSettings
 
 class GleamTileService : TileService() {
@@ -36,9 +38,26 @@ class GleamTileService : TileService() {
             return
         }
 
-        // Toggle state
+        // Toggle master power state (single pointer sync)
         val isNowOn = GleamPreferences.togglePoweredOn(this)
         updateTileState()
+
+        if (isNowOn) {
+            BrightnessController.triggerOneShotSunlightBoost(this)
+        } else {
+            val restoreMode = try {
+                RestoreMode.valueOf(GleamPreferences.getRestoreMode(this))
+            } catch (_: Exception) {
+                RestoreMode.PREVIOUS
+            }
+            BrightnessController.restoreBrightness(
+                this,
+                null,
+                restoreMode,
+                GleamPreferences.getPreviousValue(this),
+                GleamPreferences.getCustomFloorValue(this)
+            )
+        }
 
         // Notify app if running
         sendBroadcast(

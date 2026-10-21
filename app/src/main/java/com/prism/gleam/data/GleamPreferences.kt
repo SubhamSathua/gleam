@@ -1,20 +1,26 @@
 package com.prism.gleam.data
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
+import android.service.quicksettings.TileService
 
 object GleamPreferences {
     private const val PREFS_NAME = "gleam_settings"
     const val ACTION_TOGGLE_POWER = "com.prism.gleam.ACTION_TOGGLE_POWER"
-    const val ACTION_TOGGLE_AUTO = "com.prism.gleam.ACTION_TOGGLE_AUTO"
 
     private const val KEY_POWERED_ON = "is_powered_on"
     private const val KEY_AUTO_BRIGHTNESS = "is_auto_brightness"
+    private const val KEY_RESTORE_MODE = "restore_mode"
+    private const val KEY_PREVIOUS_VALUE = "previous_value"
+    private const val KEY_CUSTOM_FLOOR = "custom_floor_value"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
+    // Master Power State (The single pointer for App, Tile, and Shortcut)
     fun isPoweredOn(context: Context): Boolean {
         return getPrefs(context).getBoolean(KEY_POWERED_ON, true)
     }
@@ -29,6 +35,7 @@ object GleamPreferences {
         return next
     }
 
+    // Auto Brightness Toggle
     fun isAutoBrightness(context: Context): Boolean {
         return getPrefs(context).getBoolean(KEY_AUTO_BRIGHTNESS, true)
     }
@@ -41,5 +48,42 @@ object GleamPreferences {
         val next = !isAutoBrightness(context)
         setAutoBrightness(context, next)
         return next
+    }
+
+    // Restore Settings
+    fun getRestoreMode(context: Context): String {
+        return getPrefs(context).getString(KEY_RESTORE_MODE, "PREVIOUS") ?: "PREVIOUS"
+    }
+
+    fun setRestoreMode(context: Context, mode: String) {
+        getPrefs(context).edit().putString(KEY_RESTORE_MODE, mode).apply()
+    }
+
+    fun getPreviousValue(context: Context): Int {
+        return getPrefs(context).getInt(KEY_PREVIOUS_VALUE, 59)
+    }
+
+    fun setPreviousValue(context: Context, value: Int) {
+        getPrefs(context).edit().putInt(KEY_PREVIOUS_VALUE, value).apply()
+    }
+
+    fun getCustomFloorValue(context: Context): Int {
+        return getPrefs(context).getInt(KEY_CUSTOM_FLOOR, 50)
+    }
+
+    fun setCustomFloorValue(context: Context, value: Int) {
+        getPrefs(context).edit().putInt(KEY_CUSTOM_FLOOR, value).apply()
+    }
+
+    // Notification Shade Quick Tile Request Listening State
+    fun requestTileUpdate(context: Context) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val tileComponent = ComponentName("com.prism.gleam", "com.prism.gleam.service.GleamTileService")
+                TileService.requestListeningState(context.applicationContext, tileComponent)
+            }
+        } catch (_: Exception) {
+            // Service not bound or running on older API
+        }
     }
 }
