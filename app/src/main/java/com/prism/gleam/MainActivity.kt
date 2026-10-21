@@ -180,6 +180,14 @@ fun GleamMainScreen(
             .fillMaxSize()
             .background(colors.canvas)
     ) {
+        // Ambient Energy Pulse Transition (Least Z-index: rendered behind all UI elements)
+        EnergyPulseOverlay(
+            isPoweredOn = isPoweredOn,
+            triggerCount = powerToggleTrigger,
+            dialCenterFractionY = 0.43f,
+            modifier = Modifier.fillMaxSize()
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -265,16 +273,6 @@ fun GleamMainScreen(
                 )
             }
         }
-
-        // Full Screen Slow 1-Second Energy Pulse Animation (Spread Out & Return)
-        EnergyPulseOverlay(
-            isPoweredOn = isPoweredOn,
-            triggerCount = powerToggleTrigger,
-            dialCenterFractionY = 0.43f,
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(50f)
-        )
 
         // 5. Bottom Sheet (When Screen Off Options)
         WhenOffBottomSheet(
