@@ -22,17 +22,17 @@ object BrightnessController {
     private var originalBrightnessVal: Int? = null
 
     /**
-     * Maps ambient light in lux (0..40,000+ lx) to Android system brightness (0..255):
-     * - Under 10 lx: 15 (gentle dim floor)
-     * - ~500 lx (indoor room): ~155 (comfortable indoor level)
-     * - >= 35,000 lx (direct intense sunlight): 255 (MAXIMUM PEAK HARDWARE BACKLIGHT!)
+     * Maps ambient light in lux (0..40,000+ lx) directly to Android system brightness (0..255):
+     * - 0 lx (pitch black): 0 (0% minimum screen brightness)
+     * - ~500 lx (indoor room): ~150 (comfortable indoor level)
+     * - >= 35,000 lx (direct intense sunlight): 255 (100% MAXIMUM PEAK HARDWARE BACKLIGHT!)
      */
     fun luxToBrightness(lux: Float): Int {
-        if (lux <= 5f) return 15
+        if (lux <= 0f) return 0
         if (lux >= 35000f) return 255
 
         val fraction = luxToScaleFraction(lux)
-        return (15 + fraction * (255 - 15)).roundToInt().coerceIn(15, 255)
+        return (fraction * 255).roundToInt().coerceIn(0, 255)
     }
 
     /**
@@ -84,7 +84,7 @@ object BrightnessController {
                 )
             }
 
-            // Compute target brightness: at 40k lux, this is exactly 255 (max peak boost)
+            // Compute target brightness: 0 at 0 lx, 255 at >=35k lx
             val targetBrightness = luxToBrightness(lux)
             Settings.System.putInt(
                 resolver,
@@ -124,11 +124,11 @@ object BrightnessController {
 
             when (mode) {
                 RestoreMode.PREVIOUS -> {
-                    val restoreVal = (previousValue * 2.55f).roundToInt().coerceIn(15, 255)
+                    val restoreVal = (previousValue * 2.55f).roundToInt().coerceIn(0, 255)
                     Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, restoreVal)
                 }
                 RestoreMode.CUSTOM -> {
-                    val floorVal = (customFloorValue * 2.55f).roundToInt().coerceIn(15, 255)
+                    val floorVal = (customFloorValue * 2.55f).roundToInt().coerceIn(0, 255)
                     Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, floorVal)
                 }
                 RestoreMode.AUTO -> {

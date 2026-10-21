@@ -41,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -96,6 +95,17 @@ Sensor Hardware: $sensorName ($sensorVendor)
             Toast.makeText(context, "No email client found. Email copied to clipboard.", Toast.LENGTH_LONG).show()
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
             clipboard?.setPrimaryClip(ClipData.newPlainText("Gleam Support Email", AppConstants.SUPPORT_EMAIL))
+        }
+    }
+
+    fun openGitHubIssues() {
+        GleamHaptics.playSubtleClick(view)
+        try {
+            val url = "${AppConstants.GITHUB_REPO_URL}/issues"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            Toast.makeText(context, "Could not open browser", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -201,24 +211,42 @@ Sensor Hardware: $sensorName ($sensorVendor)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Have feedback on the sunlight boost curve, dial physics, or experiencing sensor desynchronization on your device? Direct communication helps us tune Gleam across hundreds of hardware sensor configurations.",
+                        text = "Have feedback on the sunlight boost curve, dial physics, or experiencing sensor desynchronization on your device? You have two direct options below to reach the development team.",
                         color = colors.textSub,
                         fontSize = 13.5.sp,
                         lineHeight = 20.sp
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "Tapping the email below opens your default email app with an automated hardware diagnostic block pre-filled for effortless reporting.",
-                        color = colors.textSub,
-                        fontSize = 12.5.sp,
-                        lineHeight = 18.sp
-                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // 2. Email Direct Action Card
+            // Section Header: 2 Feedback Options
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "2 Feedback Options",
+                    color = colors.textSub,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.8.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .height(1.dp)
+                        .weight(1f)
+                        .background(colors.trackGroove)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ─────────────────────────────────────────────────────────────────
+            // Option 1: Direct Email Card (Near Mail Option)
+            // ─────────────────────────────────────────────────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,14 +267,13 @@ Sensor Hardware: $sensorName ($sensorVendor)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
                                 .background(colors.primaryAccent.copy(alpha = 0.14f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Canvas(modifier = Modifier.size(20.dp)) {
                                 val strokeW = 2.dp.toPx()
-                                // Email envelope icon
                                 drawRoundRect(
                                     color = colors.primaryAccent,
                                     size = size.copy(height = size.height * 0.75f),
@@ -274,17 +301,19 @@ Sensor Hardware: $sensorName ($sensorVendor)
                         Spacer(modifier = Modifier.width(14.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Support & Developer Email",
-                                color = colors.textSub,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Option 1: Direct Email",
+                                    color = colors.primaryAccent,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                             SelectionContainer {
                                 Text(
                                     text = AppConstants.SUPPORT_EMAIL,
                                     color = colors.textTitle,
-                                    fontSize = 16.sp,
+                                    fontSize = 15.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.clickable { openEmailClient() }
                                 )
@@ -292,16 +321,25 @@ Sensor Hardware: $sensorName ($sensorVendor)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // Primary Button: Open Email App
+                    Text(
+                        text = "Opens your email app with your phone's hardware diagnostics pre-filled to help diagnose lux curve bugs quickly.",
+                        color = colors.textSub,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Action: Open Email App
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
                             .background(colors.contrastButton)
                             .clickable { openEmailClient() }
-                            .padding(vertical = 14.dp),
+                            .padding(vertical = 13.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -312,9 +350,9 @@ Sensor Hardware: $sensorName ($sensorVendor)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Secondary Action: Copy Address
+                    // Secondary: Copy Address
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -327,22 +365,149 @@ Sensor Hardware: $sensorName ($sensorVendor)
                                 clipboard?.setPrimaryClip(ClipData.newPlainText("Gleam Support Email", AppConstants.SUPPORT_EMAIL))
                                 Toast.makeText(context, "Email address copied to clipboard", Toast.LENGTH_SHORT).show()
                             }
-                            .padding(vertical = 12.dp),
+                            .padding(vertical = 11.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "Copy Email Address",
                             color = colors.textTitle,
-                            fontSize = 13.5.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // 3. Transparency Card: Diagnostic Preview
+            // ─────────────────────────────────────────────────────────────────
+            // Option 2: GitHub Issue Tracker Card (Directly Next to Mail Option)
+            // ─────────────────────────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = if (colors.isDark) 6.dp else 10.dp,
+                        shape = RoundedCornerShape(20.dp),
+                        ambientColor = colors.contrastButton.copy(alpha = 0.08f),
+                        spotColor = colors.contrastButton.copy(alpha = 0.12f)
+                    )
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.cardBackground)
+                    .padding(20.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(colors.contrastButton.copy(alpha = 0.08f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Canvas(modifier = Modifier.size(20.dp)) {
+                                val strokeW = 2.dp.toPx()
+                                // Code branch / Git bug icon
+                                drawCircle(
+                                    color = colors.textTitle,
+                                    radius = 3.dp.toPx(),
+                                    center = Offset(size.width * 0.3f, size.height * 0.3f),
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW)
+                                )
+                                drawCircle(
+                                    color = colors.textTitle,
+                                    radius = 3.dp.toPx(),
+                                    center = Offset(size.width * 0.3f, size.height * 0.7f),
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW)
+                                )
+                                drawCircle(
+                                    color = colors.textTitle,
+                                    radius = 3.dp.toPx(),
+                                    center = Offset(size.width * 0.75f, size.height * 0.5f),
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW)
+                                )
+                                drawLine(
+                                    color = colors.textTitle,
+                                    start = Offset(size.width * 0.3f, size.height * 0.38f),
+                                    end = Offset(size.width * 0.3f, size.height * 0.62f),
+                                    strokeWidth = strokeW,
+                                    cap = StrokeCap.Round
+                                )
+                                drawLine(
+                                    color = colors.textTitle,
+                                    start = Offset(size.width * 0.38f, size.height * 0.35f),
+                                    end = Offset(size.width * 0.67f, size.height * 0.48f),
+                                    strokeWidth = strokeW,
+                                    cap = StrokeCap.Round
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Option 2: Open Source Tracker",
+                                color = colors.primaryAccent,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            SelectionContainer {
+                                Text(
+                                    text = "GitHub Issue Tracker",
+                                    color = colors.textTitle,
+                                    fontSize = 15.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.clickable { openGitHubIssues() }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = "Prefer public bug tracking? Submit issues, feature requests, and join code discussions directly on GitHub.",
+                        color = colors.textSub,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Action: Open GitHub Issues
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.2.dp, colors.contrastButton.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
+                            .background(colors.cardSubtle)
+                            .clickable { openGitHubIssues() }
+                            .padding(vertical = 13.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Open GitHub Issues",
+                                color = colors.textTitle,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            ChevronRight()
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ─────────────────────────────────────────────────────────────────
+            // Transparency Card: Diagnostic Preview
+            // ─────────────────────────────────────────────────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -364,7 +529,7 @@ Sensor Hardware: $sensorName ($sensorVendor)
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "To fix device-specific light sensor issues instantly, this data is appended to your draft:",
+                        text = "To fix device-specific light sensor issues instantly, this data is appended when choosing Option 1:",
                         color = colors.textSub,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(top = 2.dp, bottom = 12.dp)
@@ -406,50 +571,6 @@ Sensor Hardware: $sensorName ($sensorVendor)
                             }
                         }
                     }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 4. GitHub Issue Tracker Card
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .border(1.dp, colors.trackGroove, RoundedCornerShape(20.dp))
-                    .background(colors.cardBackground)
-                    .clickable {
-                        GleamHaptics.playSubtleClick(view)
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.GITHUB_REPO_URL))
-                            context.startActivity(intent)
-                        } catch (_: Exception) {
-                            Toast.makeText(context, "Could not open browser", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    .padding(18.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "GitHub Issue Tracker",
-                            color = colors.textTitle,
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Open issue on the public open source repository",
-                            color = colors.textSub,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    ChevronRight()
                 }
             }
 
