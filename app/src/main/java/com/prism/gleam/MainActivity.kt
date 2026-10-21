@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.prism.gleam.ui.components.EnergyPulseOverlay
 import com.prism.gleam.ui.components.PermissionWarningCard
 import com.prism.gleam.ui.components.RestoreMode
 import com.prism.gleam.ui.components.ScaleDialView
@@ -50,6 +51,7 @@ import com.prism.gleam.ui.components.WhenOffCapsule
 import com.prism.gleam.ui.components.canWriteSystemSettings
 import com.prism.gleam.ui.components.openWriteSettingsPermissionPage
 import com.prism.gleam.ui.theme.GleamTheme
+import androidx.compose.ui.zIndex
 import kotlin.math.ln
 import kotlin.math.roundToInt
 
@@ -96,6 +98,7 @@ fun GleamMainScreen(
 
     var isPermissionGranted by remember { mutableStateOf(canWriteSystemSettings(context)) }
     var isPoweredOn by remember { mutableStateOf(true) }
+    var powerToggleTrigger by remember { mutableIntStateOf(0) }
     var currentLux by remember { mutableFloatStateOf(500f) }
     var currentSensorFraction by remember { mutableFloatStateOf(luxToScaleFraction(500f)) }
     var restoreMode by remember { mutableStateOf(RestoreMode.PREVIOUS) }
@@ -176,12 +179,13 @@ fun GleamMainScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.canvas)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 22.dp, vertical = 16.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 22.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -208,6 +212,7 @@ fun GleamMainScreen(
                 enabled = isPermissionGranted,
                 onPowerToggle = {
                     if (isPermissionGranted) {
+                        powerToggleTrigger++
                         isPoweredOn = !isPoweredOn
                         if (isPoweredOn) {
                             currentSensorFraction = when (restoreMode) {
@@ -260,6 +265,16 @@ fun GleamMainScreen(
                 )
             }
         }
+
+        // Full Screen Slow 1-Second Energy Pulse Animation (Spread Out & Return)
+        EnergyPulseOverlay(
+            isPoweredOn = isPoweredOn,
+            triggerCount = powerToggleTrigger,
+            dialCenterFractionY = 0.43f,
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(50f)
+        )
 
         // 5. Bottom Sheet (When Screen Off Options)
         WhenOffBottomSheet(
