@@ -7,6 +7,7 @@ import android.hardware.SensorManager
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,9 +41,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
+import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +70,15 @@ fun AboutScreen(
     val sensorVendor = lightSensor?.vendor ?: "Android HAL Default"
     val sensorMaxRange = lightSensor?.maximumRange?.let { "${it.toInt()} lx" } ?: "40,000 lx"
     val sensorPower = lightSensor?.power?.let { "$it mA" } ?: "0.75 mA"
+
+    val appIconBitmap = remember(context) {
+        try {
+            val drawable = context.packageManager.getApplicationIcon(context.packageName)
+            drawable.toBitmap(width = 160, height = 160).asImageBitmap()
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     Box(
         modifier = modifier
@@ -165,30 +177,47 @@ fun AboutScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Glowing Solar Icon Badge
+                    // Real App Icon with Solar Ambient Halo
                     Box(
                         modifier = Modifier
-                            .size(72.dp)
+                            .size(76.dp)
                             .shadow(
-                                elevation = 10.dp,
-                                shape = CircleShape,
-                                ambientColor = colors.primaryAccent.copy(alpha = 0.35f),
-                                spotColor = colors.primaryAccent.copy(alpha = 0.50f)
+                                elevation = 12.dp,
+                                shape = RoundedCornerShape(22.dp),
+                                ambientColor = colors.primaryAccent.copy(alpha = 0.25f),
+                                spotColor = colors.primaryAccent.copy(alpha = 0.40f)
                             )
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(colors.primaryAccent, colors.primaryPeach)
-                                )
-                            ),
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(colors.cardBackground),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "G",
-                            color = Color.White,
-                            fontSize = 34.sp,
-                            fontWeight = FontWeight.Black
-                        )
+                        if (appIconBitmap != null) {
+                            Image(
+                                bitmap = appIconBitmap,
+                                contentDescription = "App Icon",
+                                modifier = Modifier
+                                    .size(70.dp)
+                                    .clip(RoundedCornerShape(19.dp))
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.linearGradient(
+                                            listOf(colors.primaryAccent, colors.primaryPeach)
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "G",
+                                    color = Color.White,
+                                    fontSize = 34.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -227,36 +256,9 @@ fun AboutScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // 2. Three Porcelain Squircle Metric Cards (from reference image bottom style)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                SquircleInfoCard(
-                    title = "Engine",
-                    value = "Compose",
-                    sub = "Kotlin 2.0",
-                    modifier = Modifier.weight(1f)
-                )
-                SquircleInfoCard(
-                    title = "Target",
-                    value = "API 36",
-                    sub = "Android 15+",
-                    modifier = Modifier.weight(1f)
-                )
-                SquircleInfoCard(
-                    title = "Hardware",
-                    value = "Lux (SI)",
-                    sub = "Auto Sensor",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // 3. Hardware Sensor Diagnostics Card
+            // 2. Hardware Sensor Diagnostics Card
             SectionTitle(title = "Hardware Sensor Diagnostics")
 
             Box(
@@ -446,51 +448,6 @@ private fun SectionTitle(title: String) {
         letterSpacing = 1.1.sp,
         modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
     )
-}
-
-@Composable
-private fun SquircleInfoCard(
-    title: String,
-    value: String,
-    sub: String,
-    modifier: Modifier = Modifier
-) {
-    val colors = GleamTheme.colors
-    Box(
-        modifier = modifier
-            .shadow(
-                elevation = if (colors.isDark) 3.dp else 6.dp,
-                shape = RoundedCornerShape(20.dp),
-                ambientColor = colors.contrastButton.copy(alpha = 0.05f),
-                spotColor = colors.contrastButton.copy(alpha = 0.08f)
-            )
-            .clip(RoundedCornerShape(20.dp))
-            .background(colors.cardBackground)
-            .padding(vertical = 14.dp, horizontal = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = title,
-                color = colors.textMuted,
-                fontSize = 10.5.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = value,
-                color = colors.primaryAccent,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.padding(vertical = 2.dp)
-            )
-            Text(
-                text = sub,
-                color = colors.textSub,
-                fontSize = 10.5.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
 }
 
 @Composable

@@ -26,7 +26,30 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- 1-Tap Toggle Shortcut Activity -->
+        <activity
+            android:name=".shortcut.ToggleShortcutActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
+        <!-- Quick Settings Notification Tile inside Control Panel -->
+        <service
+            android:name=".service.GleamTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_sun_boost"
+            android:label="Gleam Sun"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

@@ -256,7 +256,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(22.dp))
 
             // 3. Section: App Brightness Behavior
-            SectionHeader(title = "Sunlight Controller Behavior")
+            SectionHeader(title = "Display Control")
 
             SettingsCard {
                 Row(
@@ -268,13 +268,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Auto Lux Sunlight Override",
+                            text = "Auto Brightness",
                             color = colors.textTitle,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Dynamically boost display backlight when entering direct sunlight",
+                            text = "Automatically boost screen in direct sunlight",
                             color = colors.textSub,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 2.dp)
@@ -297,12 +297,11 @@ fun SettingsScreen(
             SectionHeader(title = "Permissions & Privacy")
 
             val hasWriteSettings = canWriteSystemSettings(context)
-            val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-            val isBatteryOptimized = powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
             val hasNotifications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             } else true
-            val grantedCount = listOf(hasWriteSettings, true, isBatteryOptimized, hasNotifications).count { it }
+            val totalPerms = 3
+            val grantedCount = listOf(hasWriteSettings, true, hasNotifications).count { it }
 
             SettingsCard {
                 Row(
@@ -329,21 +328,21 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .background(
-                                        if (grantedCount == 4) Color(0xFF10B981).copy(alpha = 0.15f)
+                                        if (grantedCount == totalPerms) Color(0xFF10B981).copy(alpha = 0.15f)
                                         else colors.primaryAccent.copy(alpha = 0.15f)
                                     )
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "$grantedCount/4 Active",
-                                    color = if (grantedCount == 4) Color(0xFF10B981) else colors.primaryAccent,
+                                    text = "$grantedCount/$totalPerms Active",
+                                    color = if (grantedCount == totalPerms) Color(0xFF10B981) else colors.primaryAccent,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         }
                         Text(
-                            text = "Brightness write, haptic vibration, battery & status tile links",
+                            text = "Brightness write, haptic vibration & status tile links",
                             color = colors.textSub,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 2.dp)

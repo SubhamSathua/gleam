@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Gleam</string>
+    <string name="shortcut_toggle_short">Toggle Auto</string>
+    <string name="shortcut_toggle_long">Toggle Auto Sunlight Boost</string>
 </resources>

@@ -64,13 +64,12 @@ fun PermissionsScreen(
     BackHandler(onBack = onBack)
 
     val hasWriteSettings = canWriteSystemSettings(context)
-    val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-    val isBatteryOptimized = powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
     val hasNotifications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     } else true
 
-    val grantedCount = listOf(hasWriteSettings, true, isBatteryOptimized, hasNotifications).count { it }
+    val totalCount = 3
+    val grantedCount = listOf(hasWriteSettings, true, hasNotifications).count { it }
 
     Box(
         modifier = modifier
@@ -151,54 +150,87 @@ fun PermissionsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Overview Summary Card
+            // Distinct System Diagnostic Health Banner
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(
-                        elevation = if (colors.isDark) 4.dp else 8.dp,
-                        shape = RoundedCornerShape(22.dp),
-                        ambientColor = colors.contrastButton.copy(alpha = 0.05f),
-                        spotColor = colors.contrastButton.copy(alpha = 0.08f)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        androidx.compose.ui.graphics.Brush.linearGradient(
+                            listOf(
+                                colors.primaryAccent.copy(alpha = if (colors.isDark) 0.18f else 0.10f),
+                                colors.primaryPeach.copy(alpha = if (colors.isDark) 0.08f else 0.04f)
+                            )
+                        )
                     )
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(colors.cardBackground)
-                    .padding(18.dp)
+                    .border(
+                        1.dp,
+                        colors.primaryAccent.copy(alpha = if (colors.isDark) 0.35f else 0.20f),
+                        RoundedCornerShape(20.dp)
+                    )
+                    .padding(horizontal = 18.dp, vertical = 16.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (grantedCount == totalCount) Color(0xFF10B981) else colors.primaryAccent
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(modifier = Modifier.size(20.dp)) {
+                            val strokeW = 2.4.dp.toPx()
+                            if (grantedCount == totalCount) {
+                                drawLine(
+                                    color = Color.White,
+                                    start = Offset(size.width * 0.22f, size.height * 0.52f),
+                                    end = Offset(size.width * 0.45f, size.height * 0.75f),
+                                    strokeWidth = strokeW,
+                                    cap = StrokeCap.Round
+                                )
+                                drawLine(
+                                    color = Color.White,
+                                    start = Offset(size.width * 0.45f, size.height * 0.75f),
+                                    end = Offset(size.width * 0.82f, size.height * 0.30f),
+                                    strokeWidth = strokeW,
+                                    cap = StrokeCap.Round
+                                )
+                            } else {
+                                drawLine(
+                                    color = Color.White,
+                                    start = Offset(size.width / 2f, size.height * 0.25f),
+                                    end = Offset(size.width / 2f, size.height * 0.60f),
+                                    strokeWidth = strokeW,
+                                    cap = StrokeCap.Round
+                                )
+                                drawCircle(
+                                    color = Color.White,
+                                    radius = 1.6.dp.toPx(),
+                                    center = Offset(size.width / 2f, size.height * 0.78f)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Access Overview",
+                            text = if (grantedCount == totalCount) "All Capabilities Ready" else "Configuration Required",
                             color = colors.textTitle,
-                            fontSize = 15.sp,
+                            fontSize = 14.5.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (grantedCount == 4) "All permissions active. Gleam has full capability."
-                            else "Some permissions require action to enable full automation.",
+                            text = "$grantedCount of $totalCount permissions active",
                             color = colors.textSub,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                if (grantedCount == 4) Color(0xFF10B981).copy(alpha = 0.15f)
-                                else colors.primaryAccent.copy(alpha = 0.15f)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "$grantedCount / 4 Ready",
-                            color = if (grantedCount == 4) Color(0xFF10B981) else colors.primaryAccent,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
@@ -239,30 +271,7 @@ fun PermissionsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Permission Card 3: REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-            PermissionDetailCard(
-                title = "Unrestricted Battery Execution",
-                apiConstant = "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
-                purpose = "Prevents Android battery saver from freezing sensor evaluation when you are outdoors with the screen on.",
-                isGranted = isBatteryOptimized,
-                buttonLabel = "Open Battery Optimization Page",
-                onClick = {
-                    GleamHaptics.playSubtleClick(view)
-                    try {
-                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                        context.startActivity(intent)
-                    } catch (_: Exception) {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.parse("package:${context.packageName}")
-                        }
-                        context.startActivity(intent)
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Permission Card 4: POST_NOTIFICATIONS
+            // Permission Card 3: POST_NOTIFICATIONS
             PermissionDetailCard(
                 title = "Status Bar Quick Tile Alerts",
                 apiConstant = "android.permission.POST_NOTIFICATIONS",

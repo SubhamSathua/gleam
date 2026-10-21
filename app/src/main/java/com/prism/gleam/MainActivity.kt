@@ -45,6 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.core.content.ContextCompat
+import com.prism.gleam.data.GleamPreferences
+import com.prism.gleam.shortcut.ToggleShortcutActivity
 import com.prism.gleam.ui.components.AboutScreen
 import com.prism.gleam.ui.components.EnergyPulseOverlay
 import com.prism.gleam.ui.components.GleamHaptics
@@ -180,7 +183,7 @@ fun GleamMainScreen(
     val colors = GleamTheme.colors
 
     var isPermissionGranted by remember { mutableStateOf(canWriteSystemSettings(context)) }
-    var isPoweredOn by remember { mutableStateOf(true) }
+    var isPoweredOn by remember { mutableStateOf(GleamPreferences.isPoweredOn(context)) }
     var powerToggleTrigger by remember { mutableIntStateOf(0) }
     var currentLux by remember { mutableFloatStateOf(500f) }
     var currentSensorFraction by remember { mutableFloatStateOf(luxToScaleFraction(500f)) }
@@ -188,6 +191,31 @@ fun GleamMainScreen(
     var previousValue by remember { mutableIntStateOf(59) }
     var customFloorValue by remember { mutableIntStateOf(50) }
     var isSheetVisible by remember { mutableStateOf(false) }
+
+    // Sync with Quick Settings Tile & 1-Tap Home Screen Shortcut
+    DisposableEffect(context) {
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: Context?, intent: android.content.Intent?) {
+                if (intent?.action == GleamPreferences.ACTION_TOGGLE_POWER) {
+                    val newPower = GleamPreferences.isPoweredOn(context)
+                    if (newPower != isPoweredOn) {
+                        isPoweredOn = newPower
+                        powerToggleTrigger++
+                    }
+                }
+            }
+        }
+        val filter = android.content.IntentFilter(GleamPreferences.ACTION_TOGGLE_POWER)
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        onDispose {
+            context.unregisterReceiver(receiver)
+        }
+    }
 
     // Re-check permission on ON_RESUME (e.g. when user returns from Settings page)
     DisposableEffect(lifecycleOwner) {
@@ -310,6 +338,7 @@ fun GleamMainScreen(
                         GleamHaptics.playPowerToggle(view, context, isTurningOn = willBeOn)
                         powerToggleTrigger++
                         isPoweredOn = willBeOn
+                        GleamPreferences.setPoweredOn(context, willBeOn)
                         if (isPoweredOn) {
                             currentSensorFraction = when (restoreMode) {
                                 RestoreMode.PREVIOUS -> previousValue / 100f
@@ -353,13 +382,13 @@ fun GleamMainScreen(
                     onShortcutClick = {
                         if (isPermissionGranted) {
                             GleamHaptics.playSubtleClick(view)
-                            Toast.makeText(context, "1-Tap Sun Boost app shortcut ready", Toast.LENGTH_SHORT).show()
+                            ToggleShortcutActivity.pinShortcutToHomeScreen(context)
                         }
                     },
                     onTileClick = {
                         if (isPermissionGranted) {
                             GleamHaptics.playSubtleClick(view)
-                            Toast.makeText(context, "Quick Settings status bar tile active", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Pull down notification shade to add & use Gleam Sun quick tile", Toast.LENGTH_LONG).show()
                         }
                     }
                 )
