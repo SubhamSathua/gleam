@@ -45,9 +45,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.prism.gleam.ui.components.AboutScreen
 import com.prism.gleam.ui.components.EnergyPulseOverlay
 import com.prism.gleam.ui.components.GleamHaptics
 import com.prism.gleam.ui.components.PermissionWarningCard
+import com.prism.gleam.ui.components.PermissionsScreen
+import com.prism.gleam.ui.components.PrivacyPolicyScreen
 import com.prism.gleam.ui.components.RestoreMode
 import com.prism.gleam.ui.components.ScaleDialView
 import com.prism.gleam.ui.components.SettingsScreen
@@ -85,6 +88,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+enum class AppScreen {
+    MAIN,
+    SETTINGS,
+    PERMISSIONS,
+    PRIVACY_POLICY,
+    ABOUT
+}
+
 @Composable
 fun GleamAppRoot(
     themeMode: ThemeMode,
@@ -92,31 +103,52 @@ fun GleamAppRoot(
     onThemeModeChange: (ThemeMode) -> Unit,
     onAmoledChange: (Boolean) -> Unit
 ) {
-    var isSettingsOpen by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf(AppScreen.MAIN) }
     var isAutoBrightness by remember { mutableStateOf(true) }
 
     AnimatedContent(
-        targetState = isSettingsOpen,
+        targetState = currentScreen,
         transitionSpec = {
             fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(180))
         },
         label = "AppScreenNavigation"
-    ) { open ->
-        if (open) {
-            SettingsScreen(
-                themeMode = themeMode,
-                isAmoled = isAmoled,
-                isAutoBrightness = isAutoBrightness,
-                onThemeModeChange = onThemeModeChange,
-                onAmoledChange = onAmoledChange,
-                onAutoBrightnessChange = { isAutoBrightness = it },
-                onBack = { isSettingsOpen = false }
-            )
-        } else {
-            GleamMainScreen(
-                onOpenSettings = { isSettingsOpen = true },
-                isAutoBrightness = isAutoBrightness
-            )
+    ) { screen ->
+        when (screen) {
+            AppScreen.MAIN -> {
+                GleamMainScreen(
+                    onOpenSettings = { currentScreen = AppScreen.SETTINGS },
+                    isAutoBrightness = isAutoBrightness
+                )
+            }
+            AppScreen.SETTINGS -> {
+                SettingsScreen(
+                    themeMode = themeMode,
+                    isAmoled = isAmoled,
+                    isAutoBrightness = isAutoBrightness,
+                    onThemeModeChange = onThemeModeChange,
+                    onAmoledChange = onAmoledChange,
+                    onAutoBrightnessChange = { isAutoBrightness = it },
+                    onNavigatePermissions = { currentScreen = AppScreen.PERMISSIONS },
+                    onNavigatePrivacyPolicy = { currentScreen = AppScreen.PRIVACY_POLICY },
+                    onNavigateAbout = { currentScreen = AppScreen.ABOUT },
+                    onBack = { currentScreen = AppScreen.MAIN }
+                )
+            }
+            AppScreen.PERMISSIONS -> {
+                PermissionsScreen(
+                    onBack = { currentScreen = AppScreen.SETTINGS }
+                )
+            }
+            AppScreen.PRIVACY_POLICY -> {
+                PrivacyPolicyScreen(
+                    onBack = { currentScreen = AppScreen.SETTINGS }
+                )
+            }
+            AppScreen.ABOUT -> {
+                AboutScreen(
+                    onBack = { currentScreen = AppScreen.SETTINGS }
+                )
+            }
         }
     }
 }
