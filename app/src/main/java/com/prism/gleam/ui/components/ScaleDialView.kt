@@ -23,8 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -36,6 +34,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.prism.gleam.ui.theme.GleamTheme
 import kotlin.math.PI
 import kotlin.math.cos
@@ -62,20 +61,11 @@ fun ScaleDialView(
         label = "SensorFractionAnimation"
     )
 
-    // Breathing Ambient Aura Animation (Pulsing when ON)
+    // Breathing Ambient Aura Animation (Pulsing along active arc when ON)
     val infiniteTransition = rememberInfiniteTransition(label = "AmbientBreatheTransition")
-    val auraScale by infiniteTransition.animateFloat(
-        initialValue = 0.95f,
-        targetValue = 1.18f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "AuraScale"
-    )
     val auraAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.75f,
+        initialValue = 0.55f,
+        targetValue = 0.95f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -83,16 +73,17 @@ fun ScaleDialView(
         label = "AuraAlpha"
     )
 
+    val startAngle = 150f
+    val sweepAngle = 240f
+
     Box(
         modifier = modifier.size(dialSize),
         contentAlignment = Alignment.Center
     ) {
-        // 1. Canvas: Renders outer ticks, degree labels, and soft multi-layered luminous arc
+        // LAYER 1: Background Canvas (Recessed track groove, outer hairline ticks, degree labels)
         Canvas(modifier = Modifier.size(dialSize)) {
             val center = Offset(size.width / 2f, size.height / 2f)
             val arcRadius = 105.dp.toPx()
-            val startAngle = 150f
-            val sweepAngle = 240f
 
             // (A) Draw Outer Clean Hairline Ticks & Labels (10°, 15°, 20°, 25°, 30°)
             val numTicks = 17
@@ -145,7 +136,7 @@ fun ScaleDialView(
                 }
             }
 
-            // (B) Layer 1: Recessed Ambient Track Groove
+            // (B) Inactive Recessed Ambient Track Groove
             drawArc(
                 color = colors.trackBackground,
                 startAngle = startAngle,
@@ -155,114 +146,14 @@ fun ScaleDialView(
                 size = Size(arcRadius * 2f, arcRadius * 2f),
                 style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Round)
             )
-
-            // (C) Layer 2 & 3: Luminous Frosted Gradient Arc with Precise Rotation
-            val activeSweep = sweepAngle * animatedFraction.coerceIn(0f, 1f)
-
-            if (isPoweredOn && activeSweep > 0.5f) {
-                // Arc spans 240 deg of 360 deg (ratio = 240/360 = 2/3)
-                // Color stops are proportionally mapped so 0.0f aligns with startAngle (150°)
-                val arcBrush = Brush.sweepGradient(
-                    0.00f to colors.primaryAccent,
-                    0.18f to colors.primaryBright,
-                    0.35f to colors.primaryPeach,
-                    0.52f to colors.primaryPeachLight,
-                    0.67f to Color.White.copy(alpha = 0.35f),
-                    1.00f to colors.primaryAccent,
-                    center = center
-                )
-
-                // Rotated to startAngle so 0.0f is exactly at 150 degrees
-                rotate(degrees = startAngle, pivot = center) {
-                    // Layer 2: Soft ambient diffusion plume
-                    drawArc(
-                        brush = arcBrush,
-                        startAngle = 0f,
-                        sweepAngle = activeSweep,
-                        useCenter = false,
-                        topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
-                        size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 32.dp.toPx(), cap = StrokeCap.Round),
-                        alpha = 0.45f
-                    )
-
-                    // Layer 3: Soft Luminous Core Arc
-                    drawArc(
-                        brush = arcBrush,
-                        startAngle = 0f,
-                        sweepAngle = activeSweep,
-                        useCenter = false,
-                        topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
-                        size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
-                    )
-                }
-            }
-
-            // (D) Signature Black Dot Knob with White Halo Ring from Reference Image (Always precise)
-            if (isPoweredOn) {
-                val currentAngleDeg = startAngle + activeSweep
-                val currentAngleRad = (currentAngleDeg * PI / 180f).toFloat()
-                val knobCenter = Offset(
-                    center.x + arcRadius * cos(currentAngleRad),
-                    center.y + arcRadius * sin(currentAngleRad)
-                )
-
-                // Soft Ambient Glow Plume
-                drawCircle(
-                    color = colors.primaryAccent.copy(alpha = 0.35f),
-                    radius = 18.dp.toPx(),
-                    center = knobCenter
-                )
-                // Outer Soft White Halo
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.70f),
-                    radius = 15.dp.toPx(),
-                    center = knobCenter
-                )
-                // Crisp White Ring
-                drawCircle(
-                    color = Color.White,
-                    radius = 12.dp.toPx(),
-                    center = knobCenter
-                )
-                // Core Black Dot
-                drawCircle(
-                    color = colors.contrastButton,
-                    radius = 8.5.dp.toPx(),
-                    center = knobCenter
-                )
-            }
         }
 
-        // 2. Center Hub: Seamless 188dp Button (Zero Gap with Scale Inner Diameter)
+        // LAYER 2: Center Hub: Seamless 188dp Button (Zero Gap with Scale Inner Radius)
         Box(
             modifier = Modifier.size(188.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Ambient Breathing Light Aura directly hugging the perimeter
-            if (isPoweredOn && enabled) {
-                Box(
-                    modifier = Modifier
-                        .size(208.dp)
-                        .scale(auraScale)
-                        .drawBehind {
-                            drawCircle(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        colors.primaryAccent.copy(alpha = 0.5f * auraAlpha),
-                                        colors.primaryPeach.copy(alpha = 0.2f * auraAlpha),
-                                        Color.Transparent
-                                    ),
-                                    center = Offset(size.width / 2f, size.height / 2f),
-                                    radius = size.width / 2f
-                                )
-                            )
-                        }
-                )
-            }
-
-            // Seamless Central Tactile Porcelain Button (fills inner scale with zero gap)
+            // Seamless Central Tactile Porcelain Button
             Box(
                 modifier = Modifier
                     .size(188.dp)
@@ -328,6 +219,105 @@ fun ScaleDialView(
                         )
                     }
                 }
+            }
+        }
+
+        // LAYER 3: Foreground Canvas (ACTIVE ARC + AMBIENT LIGHT + KNOB ABOVE BUTTON IN Z-AXIS)
+        Canvas(
+            modifier = Modifier
+                .size(dialSize)
+                .zIndex(10f)
+        ) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val arcRadius = 105.dp.toPx()
+            val activeSweep = sweepAngle * animatedFraction.coerceIn(0f, 1f)
+
+            if (isPoweredOn && activeSweep > 0.5f) {
+                // Reversed Gradient: Start is LIGHTER (Peach Light), End at Knob is DARKER (Solar Orange)
+                val kRatio = (activeSweep / 360f).coerceIn(0.005f, 1.0f)
+                val arcBrush = Brush.sweepGradient(
+                    0.000f to colors.primaryPeachLight,
+                    kRatio * 0.35f to colors.primaryPeach,
+                    kRatio * 0.70f to colors.primaryBright,
+                    kRatio * 1.00f to colors.primaryAccent,
+                    (kRatio * 1.001f).coerceAtMost(1f) to Color.Transparent,
+                    1.000f to Color.Transparent,
+                    center = center
+                )
+
+                // Rotated to startAngle so 0.0f aligns exactly with start of arc (150°)
+                rotate(degrees = startAngle, pivot = center) {
+                    // 1. Ambient Light Plume: from start to knob only (Diffused aura)
+                    drawArc(
+                        brush = arcBrush,
+                        startAngle = 0f,
+                        sweepAngle = activeSweep,
+                        useCenter = false,
+                        topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
+                        size = Size(arcRadius * 2f, arcRadius * 2f),
+                        style = Stroke(width = 40.dp.toPx(), cap = StrokeCap.Round),
+                        alpha = 0.35f * auraAlpha
+                    )
+
+                    // 2. Secondary Soft Glow: from start to knob only
+                    drawArc(
+                        brush = arcBrush,
+                        startAngle = 0f,
+                        sweepAngle = activeSweep,
+                        useCenter = false,
+                        topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
+                        size = Size(arcRadius * 2f, arcRadius * 2f),
+                        style = Stroke(width = 28.dp.toPx(), cap = StrokeCap.Round),
+                        alpha = 0.60f * auraAlpha
+                    )
+
+                    // 3. Luminous Core Arc: from start to knob only
+                    drawArc(
+                        brush = arcBrush,
+                        startAngle = 0f,
+                        sweepAngle = activeSweep,
+                        useCenter = false,
+                        topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
+                        size = Size(arcRadius * 2f, arcRadius * 2f),
+                        style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
+                    )
+                }
+            }
+
+            // (D) Signature Black Dot Knob with White Halo Ring:
+            // Rendered in Foreground layer with higher Z-axis so it cleanly floats OVER the ON button
+            if (isPoweredOn) {
+                val currentAngleDeg = startAngle + activeSweep
+                val currentAngleRad = (currentAngleDeg * PI / 180f).toFloat()
+                val knobCenter = Offset(
+                    center.x + arcRadius * cos(currentAngleRad),
+                    center.y + arcRadius * sin(currentAngleRad)
+                )
+
+                // Soft Ambient Glow Plume on knob
+                drawCircle(
+                    color = colors.primaryAccent.copy(alpha = 0.45f * auraAlpha),
+                    radius = 22.dp.toPx(),
+                    center = knobCenter
+                )
+                // Outer Soft White Halo Ring
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.75f),
+                    radius = 16.dp.toPx(),
+                    center = knobCenter
+                )
+                // Crisp White Ring
+                drawCircle(
+                    color = Color.White,
+                    radius = 12.dp.toPx(),
+                    center = knobCenter
+                )
+                // Core Black Dot (Unclipped and proud on top)
+                drawCircle(
+                    color = colors.contrastButton,
+                    radius = 8.5.dp.toPx(),
+                    center = knobCenter
+                )
             }
         }
     }
