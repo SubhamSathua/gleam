@@ -35,12 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.prism.gleam.ui.components.EnergyPulseOverlay
+import com.prism.gleam.ui.components.GleamHaptics
 import com.prism.gleam.ui.components.PermissionWarningCard
 import com.prism.gleam.ui.components.RestoreMode
 import com.prism.gleam.ui.components.ScaleDialView
@@ -93,6 +95,7 @@ fun GleamMainScreen(
     onToggleDarkTheme: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val colors = GleamTheme.colors
 
@@ -220,8 +223,10 @@ fun GleamMainScreen(
                 enabled = isPermissionGranted,
                 onPowerToggle = {
                     if (isPermissionGranted) {
+                        val willBeOn = !isPoweredOn
+                        GleamHaptics.playPowerToggle(view, context, isTurningOn = willBeOn)
                         powerToggleTrigger++
-                        isPoweredOn = !isPoweredOn
+                        isPoweredOn = willBeOn
                         if (isPoweredOn) {
                             currentSensorFraction = when (restoreMode) {
                                 RestoreMode.PREVIOUS -> previousValue / 100f
@@ -245,6 +250,7 @@ fun GleamMainScreen(
                     enabled = isPermissionGranted,
                     onClick = {
                         if (isPermissionGranted) {
+                            GleamHaptics.playSubtleClick(view)
                             isSheetVisible = true
                         }
                     }
@@ -257,16 +263,19 @@ fun GleamMainScreen(
                     enabled = isPermissionGranted,
                     onWidgetClick = {
                         if (isPermissionGranted) {
+                            GleamHaptics.playSubtleClick(view)
                             Toast.makeText(context, "Home Screen Widget shortcut activated", Toast.LENGTH_SHORT).show()
                         }
                     },
                     onShortcutClick = {
                         if (isPermissionGranted) {
+                            GleamHaptics.playSubtleClick(view)
                             Toast.makeText(context, "1-Tap Sun Boost app shortcut ready", Toast.LENGTH_SHORT).show()
                         }
                     },
                     onTileClick = {
                         if (isPermissionGranted) {
+                            GleamHaptics.playSubtleClick(view)
                             Toast.makeText(context, "Quick Settings status bar tile active", Toast.LENGTH_SHORT).show()
                         }
                     }
