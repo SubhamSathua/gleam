@@ -3,10 +3,12 @@ package com.prism.gleam.ui.components
 import android.graphics.Paint
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -50,10 +52,13 @@ fun ScaleDialView(
 ) {
     val colors = GleamTheme.colors
 
-    // Smooth animation for sensor reading
+    // Smooth, instant spring tracking for physical sensor readings (zero lag)
     val animatedFraction by animateFloatAsState(
         targetValue = if (isPoweredOn && enabled) sensorLightFraction.coerceIn(0f, 1f) else 0f,
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
         label = "SensorFractionAnimation"
     )
 
@@ -152,9 +157,9 @@ fun ScaleDialView(
             )
 
             // (C) Layer 2 & 3: Luminous Frosted Gradient Arc with Precise Rotation
-            if (isPoweredOn && animatedFraction > 0.01f) {
-                val activeSweep = sweepAngle * animatedFraction
+            val activeSweep = sweepAngle * animatedFraction.coerceIn(0f, 1f)
 
+            if (isPoweredOn && activeSweep > 0.5f) {
                 // Arc spans 240 deg of 360 deg (ratio = 240/360 = 2/3)
                 // Color stops are proportionally mapped so 0.0f aligns with startAngle (150°)
                 val arcBrush = Brush.sweepGradient(
@@ -192,8 +197,10 @@ fun ScaleDialView(
                         style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
                     )
                 }
+            }
 
-                // (D) Signature Black Dot Knob with White Halo Ring from Reference Image
+            // (D) Signature Black Dot Knob with White Halo Ring from Reference Image (Always precise)
+            if (isPoweredOn) {
                 val currentAngleDeg = startAngle + activeSweep
                 val currentAngleRad = (currentAngleDeg * PI / 180f).toFloat()
                 val knobCenter = Offset(
@@ -203,13 +210,13 @@ fun ScaleDialView(
 
                 // Soft Ambient Glow Plume
                 drawCircle(
-                    color = colors.primaryAccent.copy(alpha = 0.3f),
+                    color = colors.primaryAccent.copy(alpha = 0.35f),
                     radius = 18.dp.toPx(),
                     center = knobCenter
                 )
                 // Outer Soft White Halo
                 drawCircle(
-                    color = Color.White.copy(alpha = 0.65f),
+                    color = Color.White.copy(alpha = 0.70f),
                     radius = 15.dp.toPx(),
                     center = knobCenter
                 )

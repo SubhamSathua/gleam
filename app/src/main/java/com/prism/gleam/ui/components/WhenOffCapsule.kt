@@ -48,7 +48,7 @@ fun WhenOffCapsule(
     val subtitle = when (mode) {
         RestoreMode.PREVIOUS -> "Return to Previous ($previewValue%)"
         RestoreMode.CUSTOM -> "Return to Custom Floor ($previewValue%)"
-        RestoreMode.AUTO -> "Return to Last Auto Sensor"
+        RestoreMode.AUTO -> "Return to Auto Sensor ($previewValue lx)"
     }
 
     Box(

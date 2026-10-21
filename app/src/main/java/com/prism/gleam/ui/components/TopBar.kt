@@ -32,7 +32,9 @@ import kotlin.math.sin
 @Composable
 fun TopBar(
     onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    luxReading: Float? = null,
+    isPoweredOn: Boolean = true
 ) {
     val colors = GleamTheme.colors
 
@@ -50,8 +52,14 @@ fun TopBar(
                 letterSpacing = (-0.4).sp
             )
             Text(
-                text = "Adaptive Light Controller",
-                color = colors.textSub,
+                text = if (isPoweredOn && luxReading != null) {
+                    "Live Sensor • ${luxReading.toInt()} lx"
+                } else if (!isPoweredOn) {
+                    "Adaptive Light Controller • Standby"
+                } else {
+                    "Adaptive Light Controller"
+                },
+                color = if (isPoweredOn && luxReading != null) colors.primaryAccent else colors.textSub,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
