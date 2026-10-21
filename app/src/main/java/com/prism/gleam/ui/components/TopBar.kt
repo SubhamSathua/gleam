@@ -65,15 +65,15 @@ fun TopBar(
             )
         }
 
-        // Settings Icon Button (⚙)
+        // Premium Settings Icon Button (⚙)
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(46.dp)
                 .shadow(
-                    elevation = if (colors.isDark) 4.dp else 8.dp,
+                    elevation = if (colors.isDark) 6.dp else 10.dp,
                     shape = CircleShape,
-                    ambientColor = colors.contrastButton.copy(alpha = 0.06f),
-                    spotColor = colors.contrastButton.copy(alpha = 0.1f)
+                    ambientColor = colors.contrastButton.copy(alpha = 0.08f),
+                    spotColor = colors.contrastButton.copy(alpha = 0.14f)
                 )
                 .clip(CircleShape)
                 .background(colors.cardBackground)
@@ -84,24 +84,16 @@ fun TopBar(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.size(20.dp)) {
-                val strokeW = 2.dp.toPx()
+            Canvas(modifier = Modifier.size(22.dp)) {
                 val gearColor = colors.textTitle
                 val c = Offset(size.width / 2f, size.height / 2f)
+                val strokeW = 2.4.dp.toPx()
 
-                // Central circle
-                drawCircle(
-                    color = gearColor,
-                    radius = 4.dp.toPx(),
-                    center = c,
-                    style = Stroke(width = strokeW)
-                )
-
-                // 6 gear cogs
-                val outerR = 9.dp.toPx()
-                val innerR = 6.dp.toPx()
-                for (i in 0 until 6) {
-                    val angle = (i * 60f * PI / 180f).toFloat()
+                // 8 contoured teeth around perimeter
+                val outerR = 9.5.dp.toPx()
+                val innerR = 6.2.dp.toPx()
+                for (i in 0 until 8) {
+                    val angle = (i * 45f * PI / 180f).toFloat()
                     val p1 = Offset(c.x + innerR * cos(angle), c.y + innerR * sin(angle))
                     val p2 = Offset(c.x + outerR * cos(angle), c.y + outerR * sin(angle))
                     drawLine(
@@ -112,6 +104,27 @@ fun TopBar(
                         cap = StrokeCap.Round
                     )
                 }
+
+                // Smooth outer ring
+                drawCircle(
+                    color = gearColor,
+                    radius = innerR,
+                    center = c,
+                    style = Stroke(width = 1.8.dp.toPx())
+                )
+
+                // Central hollow aperture
+                drawCircle(
+                    color = colors.cardBackground,
+                    radius = 3.4.dp.toPx(),
+                    center = c
+                )
+                drawCircle(
+                    color = gearColor,
+                    radius = 3.4.dp.toPx(),
+                    center = c,
+                    style = Stroke(width = 1.6.dp.toPx())
+                )
             }
         }
     }

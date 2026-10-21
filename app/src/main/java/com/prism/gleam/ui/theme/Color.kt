@@ -33,6 +33,12 @@ val SolarOrangeDark = Color(0xFFFF6E35)
 val SolarPeachDark = Color(0xFFFFB28A)
 val SolarGlowDark = Color(0x77FF763B)
 
+val AmoledCanvas = Color(0xFF000000)
+val AmoledCard = Color(0xFF08090D)
+val AmoledCardSubtle = Color(0xFF101217)
+val AmoledTrack = Color(0xFF151821)
+val AmoledTrackGroove = Color(0xFF0A0C10)
+
 val TextTitleDark = Color(0xFFF4F6FB)
 val TextSubDark = Color(0xFF8E98AA)
 val TextMutedDark = Color(0xFF5A6475)
@@ -94,6 +100,14 @@ val DarkGleamColors = GleamColors(
     contrastButton = Color.White,
     contrastButtonText = ObsidianBlack,
     isDark = true
+)
+
+val AmoledDarkGleamColors = DarkGleamColors.copy(
+    canvas = AmoledCanvas,
+    cardBackground = AmoledCard,
+    cardSubtle = AmoledCardSubtle,
+    trackBackground = AmoledTrack,
+    trackGroove = AmoledTrackGroove
 )
 
 val LocalGleamColors = staticCompositionLocalOf { LightGleamColors }

@@ -37,6 +37,12 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = TextTitleDark
 )
 
+enum class ThemeMode(val label: String) {
+    SYSTEM("System Default"),
+    LIGHT("Light Porcelain"),
+    DARK("Dark Obsidian")
+}
+
 object GleamTheme {
     val colors: GleamColors
         @Composable
@@ -46,11 +52,23 @@ object GleamTheme {
 
 @Composable
 fun GleamTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    isAmoled: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val gleamColors = if (darkTheme) DarkGleamColors else LightGleamColors
-    val materialScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val systemDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        ThemeMode.SYSTEM -> systemDark
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+
+    val gleamColors = when {
+        isDark && isAmoled -> AmoledDarkGleamColors
+        isDark -> DarkGleamColors
+        else -> LightGleamColors
+    }
+    val materialScheme = if (isDark) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -60,8 +78,8 @@ fun GleamTheme(
                 it.statusBarColor = gleamColors.canvas.toArgb()
                 it.navigationBarColor = gleamColors.canvas.toArgb()
                 val controller = WindowCompat.getInsetsController(it, view)
-                controller.isAppearanceLightStatusBars = !darkTheme
-                controller.isAppearanceLightNavigationBars = !darkTheme
+                controller.isAppearanceLightStatusBars = !isDark
+                controller.isAppearanceLightNavigationBars = !isDark
             }
         }
     }

@@ -11,8 +11,12 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +50,7 @@ import com.prism.gleam.ui.components.GleamHaptics
 import com.prism.gleam.ui.components.PermissionWarningCard
 import com.prism.gleam.ui.components.RestoreMode
 import com.prism.gleam.ui.components.ScaleDialView
+import com.prism.gleam.ui.components.SettingsScreen
 import com.prism.gleam.ui.components.ShortcutsRow
 import com.prism.gleam.ui.components.TopBar
 import com.prism.gleam.ui.components.WhenOffBottomSheet
@@ -53,7 +58,7 @@ import com.prism.gleam.ui.components.WhenOffCapsule
 import com.prism.gleam.ui.components.canWriteSystemSettings
 import com.prism.gleam.ui.components.openWriteSettingsPermissionPage
 import com.prism.gleam.ui.theme.GleamTheme
-import androidx.compose.ui.zIndex
+import com.prism.gleam.ui.theme.ThemeMode
 import kotlin.math.ln
 import kotlin.math.roundToInt
 
@@ -62,14 +67,56 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val systemDark = isSystemInDarkTheme()
-            var isDarkTheme by remember { mutableStateOf(systemDark) }
+            var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+            var isAmoled by remember { mutableStateOf(false) }
 
-            GleamTheme(darkTheme = isDarkTheme) {
-                GleamMainScreen(
-                    onToggleDarkTheme = { isDarkTheme = !isDarkTheme }
+            GleamTheme(
+                themeMode = themeMode,
+                isAmoled = isAmoled
+            ) {
+                GleamAppRoot(
+                    themeMode = themeMode,
+                    isAmoled = isAmoled,
+                    onThemeModeChange = { themeMode = it },
+                    onAmoledChange = { isAmoled = it }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun GleamAppRoot(
+    themeMode: ThemeMode,
+    isAmoled: Boolean,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onAmoledChange: (Boolean) -> Unit
+) {
+    var isSettingsOpen by remember { mutableStateOf(false) }
+    var isAutoBrightness by remember { mutableStateOf(true) }
+
+    AnimatedContent(
+        targetState = isSettingsOpen,
+        transitionSpec = {
+            fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(180))
+        },
+        label = "AppScreenNavigation"
+    ) { open ->
+        if (open) {
+            SettingsScreen(
+                themeMode = themeMode,
+                isAmoled = isAmoled,
+                isAutoBrightness = isAutoBrightness,
+                onThemeModeChange = onThemeModeChange,
+                onAmoledChange = onAmoledChange,
+                onAutoBrightnessChange = { isAutoBrightness = it },
+                onBack = { isSettingsOpen = false }
+            )
+        } else {
+            GleamMainScreen(
+                onOpenSettings = { isSettingsOpen = true },
+                isAutoBrightness = isAutoBrightness
+            )
         }
     }
 }
@@ -92,7 +139,8 @@ fun luxToScaleFraction(lux: Float): Float {
 
 @Composable
 fun GleamMainScreen(
-    onToggleDarkTheme: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    isAutoBrightness: Boolean = true
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -130,8 +178,8 @@ fun GleamMainScreen(
     }
 
     // Real Android Hardware Ambient Light Sensor (TYPE_LIGHT) - 100% Deterministic & Precise
-    DisposableEffect(lifecycleOwner, isPoweredOn, isPermissionGranted) {
-        if (!isPoweredOn || !isPermissionGranted) {
+    DisposableEffect(lifecycleOwner, isPoweredOn, isPermissionGranted, isAutoBrightness) {
+        if (!isPoweredOn || !isPermissionGranted || !isAutoBrightness) {
             return@DisposableEffect onDispose { }
         }
 
@@ -203,7 +251,10 @@ fun GleamMainScreen(
             // 1. Top Bar with Live Sensor Readout & Rose-Red Permission Warning Card
             Column(modifier = Modifier.fillMaxWidth()) {
                 TopBar(
-                    onSettingsClick = { isSheetVisible = true },
+                    onSettingsClick = {
+                        GleamHaptics.playSubtleClick(view)
+                        onOpenSettings()
+                    },
                     luxReading = currentLux,
                     isPoweredOn = isPoweredOn && isPermissionGranted
                 )
@@ -299,7 +350,7 @@ fun GleamMainScreen(
 @Preview(showBackground = true, name = "Light Porcelain Theme")
 @Composable
 fun GleamMainScreenLightPreview() {
-    GleamTheme(darkTheme = false) {
+    GleamTheme(themeMode = ThemeMode.LIGHT) {
         GleamMainScreen()
     }
 }
@@ -307,7 +358,7 @@ fun GleamMainScreenLightPreview() {
 @Preview(showBackground = true, name = "Dark Obsidian Theme")
 @Composable
 fun GleamMainScreenDarkPreview() {
-    GleamTheme(darkTheme = true) {
+    GleamTheme(themeMode = ThemeMode.DARK) {
         GleamMainScreen()
     }
 }
