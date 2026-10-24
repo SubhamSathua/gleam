@@ -402,8 +402,9 @@ fun GleamMainScreen(
                             BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                         }
 
-                        // Sync notification shade Quick Settings tile and send broadcast
+                        // Sync notification shade Quick Settings tile and widgets
                         GleamPreferences.requestTileUpdate(context)
+                        com.prism.gleam.widget.GleamWidgetManager.updateAllWidgets(context)
                         context.sendBroadcast(
                             android.content.Intent(GleamPreferences.ACTION_TOGGLE_POWER).setPackage(context.packageName)
                         )
@@ -437,7 +438,8 @@ fun GleamMainScreen(
                     onWidgetClick = {
                         if (isPermissionGranted) {
                             GleamHaptics.playSubtleClick(view)
-                            Toast.makeText(context, "Home Screen Widget shortcut activated", Toast.LENGTH_SHORT).show()
+                            val intent = android.content.Intent(context, com.prism.gleam.widget.WidgetSettingsActivity::class.java)
+                            context.startActivity(intent)
                         }
                     },
                     onShortcutClick = {

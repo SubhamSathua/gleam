@@ -59,10 +59,11 @@ class GleamTileService : TileService() {
             )
         }
 
-        // Notify app if running
+        // Notify app and widgets if running
         sendBroadcast(
             Intent(GleamPreferences.ACTION_TOGGLE_POWER).setPackage(packageName)
         )
+        com.prism.gleam.widget.GleamWidgetManager.updateAllWidgets(this)
     }
 
     private fun updateTileState() {

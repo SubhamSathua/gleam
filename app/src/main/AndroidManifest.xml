@@ -50,6 +50,61 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <!-- Widget Settings Configuration Activity -->
+        <activity
+            android:name=".widget.WidgetSettingsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Gleam">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <!-- 1x1 Quick Toggle Widget -->
+        <receiver
+            android:name=".widget.GleamWidget1x1Provider"
+            android:exported="true"
+            android:label="Gleam Toggle (1x1)">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.prism.gleam.ACTION_TOGGLE_POWER" />
+                <action android:name="com.prism.gleam.ACTION_WIDGET_TOGGLE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_1x1" />
+        </receiver>
+
+        <!-- 2x2 Status Pill Widget -->
+        <receiver
+            android:name=".widget.GleamWidget2x2Provider"
+            android:exported="true"
+            android:label="Gleam Status Pill (2x2)">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.prism.gleam.ACTION_TOGGLE_POWER" />
+                <action android:name="com.prism.gleam.ACTION_WIDGET_TOGGLE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_2x2" />
+        </receiver>
+
+        <!-- 4x4 Dashboard Widget -->
+        <receiver
+            android:name=".widget.GleamWidget4x4Provider"
+            android:exported="true"
+            android:label="Gleam Dashboard (4x4)">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.prism.gleam.ACTION_TOGGLE_POWER" />
+                <action android:name="com.prism.gleam.ACTION_WIDGET_TOGGLE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_4x4" />
+        </receiver>
     </application>
 
 </manifest>

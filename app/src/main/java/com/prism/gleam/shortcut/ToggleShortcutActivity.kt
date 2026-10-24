@@ -50,10 +50,11 @@ class ToggleShortcutActivity : Activity() {
         // Notify Quick Settings Tile to refresh state
         GleamPreferences.requestTileUpdate(this)
 
-        // Notify MainActivity if running
+        // Notify MainActivity and widgets if running
         sendBroadcast(
             Intent(GleamPreferences.ACTION_TOGGLE_POWER).setPackage(packageName)
         )
+        com.prism.gleam.widget.GleamWidgetManager.updateAllWidgets(this)
 
         finish()
     }
