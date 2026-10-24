@@ -168,7 +168,9 @@ object GleamWidgetRenderer {
         }
 
         // 1. Draw Background Path (Plain or Minimal Gradient)
-        val backgroundPath = createSquirclePath(cardRect, effectiveRadiusPx, config.smoothingPercent)
+        // In 1x1, corner smoothing is explicitly removed as requested
+        val effectiveSmoothing = if (widgetSize == WidgetSize.SIZE_1X1) 0 else config.smoothingPercent
+        val backgroundPath = createSquirclePath(cardRect, effectiveRadiusPx, effectiveSmoothing)
         val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
             isDither = true
@@ -243,8 +245,8 @@ object GleamWidgetRenderer {
                 val cardH = cardRect.height()
                 val iconSize = (cardH * 0.54f).roundToInt()
 
-                val horizontalPadding = cardH * 0.22f
-                val iconLeft = (cardRect.left + horizontalPadding).roundToInt()
+                // Icon positioned on left with comfortable capsule cap margin
+                val iconLeft = (cardRect.left + cardH * 0.28f).roundToInt()
                 val iconTop = (cardRect.centerY() - iconSize / 2f).roundToInt()
 
                 if (iconDrawable != null) {
@@ -252,12 +254,15 @@ object GleamWidgetRenderer {
                     iconDrawable.draw(canvas)
                 }
 
-                val textLeft = iconLeft + iconSize + (cardH * 0.14f)
+                // Generous spacing between icon and text, moving text towards the right
+                val iconRight = iconLeft + iconSize
+                val gap = (cardH * 0.30f).coerceAtLeast(18f * density)
+                val textLeft = iconRight + gap
                 val textBlockCenterY = cardRect.centerY()
 
                 // Typography sizes scale proportionally
-                val titleSize = (cardH * 0.22f).coerceAtLeast(13f * density)
-                val subtextSize = (cardH * 0.145f).coerceAtLeast(9.5f * density)
+                val titleSize = (cardH * 0.23f).coerceAtLeast(14f * density)
+                val subtextSize = (cardH * 0.15f).coerceAtLeast(10f * density)
 
                 val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = primaryTextColor
@@ -279,7 +284,7 @@ object GleamWidgetRenderer {
 
                 val titleHeight = titleMetrics.descent - titleMetrics.ascent
                 val subHeight = subMetrics.descent - subMetrics.ascent
-                val spacing = 2f * density
+                val spacing = 2.5f * density
 
                 val totalTextHeight = titleHeight + spacing + subHeight
                 val titleY = textBlockCenterY - (totalTextHeight / 2f) - titleMetrics.ascent

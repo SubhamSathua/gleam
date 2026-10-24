@@ -138,11 +138,18 @@ fun WidgetSettingsScreen(
         }
     }
 
+    val normalizedRadius = when (initialConfig.radiusDp) {
+        20, 15 -> 15
+        40, 30 -> 30
+        else -> 70
+    }
     var selectedTheme by remember { mutableStateOf(initialConfig.theme) }
     var selectedColorStyle by remember { mutableStateOf(initialConfig.colorStyle) }
     var selectedOpacity by remember { mutableIntStateOf(initialConfig.opacityPercent) }
-    var selectedRadius by remember { mutableIntStateOf(initialConfig.radiusDp) }
-    var selectedSmoothing by remember { mutableIntStateOf(initialConfig.smoothingPercent) }
+    var selectedRadius by remember { mutableIntStateOf(normalizedRadius) }
+    var selectedSmoothing by remember {
+        mutableIntStateOf(if (widgetSize == WidgetSize.SIZE_1X1) 0 else initialConfig.smoothingPercent)
+    }
 
     val currentConfig = WidgetConfig(
         theme = selectedTheme,
@@ -327,37 +334,39 @@ fun WidgetSettingsScreen(
 
                     // Control 4: Radius
                     val radiusLabel = when (selectedRadius) {
-                        20 -> "Minimal (20)"
-                        40 -> "Rounded (40)"
+                        15 -> "Minimal (15)"
+                        30 -> "Rounded (30)"
                         else -> "Capsule (70)"
                     }
                     Discrete3StopSlider(
                         title = "Radius",
-                        stops = listOf(20, 40, 70),
-                        stopLabels = listOf("Minimal", "Rounded", "Capsule"),
+                        stops = listOf(15, 30, 70),
+                        stopLabels = listOf("15", "30", "70"),
                         currentValue = selectedRadius,
                         valueLabel = radiusLabel,
                         onValueChange = { selectedRadius = it }
                     )
 
-                    Spacer(modifier = Modifier.height(18.dp))
-                    WidgetDivider()
-                    Spacer(modifier = Modifier.height(18.dp))
+                    // Control 5: Corner Smoothing (Removed for 1x1 as requested)
+                    if (widgetSize != WidgetSize.SIZE_1X1) {
+                        Spacer(modifier = Modifier.height(18.dp))
+                        WidgetDivider()
+                        Spacer(modifier = Modifier.height(18.dp))
 
-                    // Control 5: Corner Smoothing
-                    val smoothingLabel = when (selectedSmoothing) {
-                        0 -> "None (0)"
-                        50 -> "Minimal (50)"
-                        else -> "Extreme (100)"
+                        val smoothingLabel = when (selectedSmoothing) {
+                            0 -> "None (0)"
+                            50 -> "Minimal (50)"
+                            else -> "Extreme (100)"
+                        }
+                        Discrete3StopSlider(
+                            title = "Corner Smoothing",
+                            stops = listOf(0, 50, 100),
+                            stopLabels = listOf("None", "Minimal", "Extreme"),
+                            currentValue = selectedSmoothing,
+                            valueLabel = smoothingLabel,
+                            onValueChange = { selectedSmoothing = it }
+                        )
                     }
-                    Discrete3StopSlider(
-                        title = "Corner Smoothing",
-                        stops = listOf(0, 50, 100),
-                        stopLabels = listOf("None", "Minimal", "Extreme"),
-                        currentValue = selectedSmoothing,
-                        valueLabel = smoothingLabel,
-                        onValueChange = { selectedSmoothing = it }
-                    )
                 }
             }
 

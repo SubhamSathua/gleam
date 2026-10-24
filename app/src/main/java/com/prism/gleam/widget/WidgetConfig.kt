@@ -29,12 +29,12 @@ data class WidgetConfig(
     val theme: WidgetTheme = WidgetTheme.SYSTEM,
     val colorStyle: WidgetColorStyle = WidgetColorStyle.MINIMAL_GRADIENT,
     val opacityPercent: Int = 100, // 50, 70, 100
-    val radiusDp: Int = 70,        // 20 (Minimal), 40 (Rounded), 70 (Capsule)
+    val radiusDp: Int = 70,        // 15 (Minimal), 30 (Rounded), 70 (Capsule)
     val smoothingPercent: Int = 50 // 0 (None), 50 (Minimal), 100 (Extreme)
 ) {
     companion object {
         val OPACITY_STOPS = listOf(50, 70, 100)
-        val RADIUS_STOPS = listOf(20, 40, 70)
+        val RADIUS_STOPS = listOf(15, 30, 70)
         val SMOOTHING_STOPS = listOf(0, 50, 100)
     }
 }
