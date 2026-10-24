@@ -13,10 +13,10 @@ object WidgetPreferences {
     fun loadConfig(context: Context, widgetId: Int): WidgetConfig {
         val prefs = getPrefs(context)
         val themeStr = prefs.getString("theme_$widgetId", WidgetTheme.SYSTEM.name) ?: WidgetTheme.SYSTEM.name
-        val colorStyleStr = prefs.getString("color_style_$widgetId", WidgetColorStyle.MINIMAL_GRADIENT.name) ?: WidgetColorStyle.MINIMAL_GRADIENT.name
+        val colorStyleStr = prefs.getString("color_style_$widgetId", WidgetColorStyle.PLAIN.name) ?: WidgetColorStyle.PLAIN.name
         val opacity = prefs.getInt("opacity_$widgetId", 100)
-        val radius = prefs.getInt("radius_$widgetId", 70)
-        val smoothing = prefs.getInt("smoothing_$widgetId", 50)
+        val radius = prefs.getInt("radius_$widgetId", 30)
+        val smoothing = prefs.getInt("smoothing_$widgetId", 0)
 
         val theme = try {
             WidgetTheme.valueOf(themeStr)

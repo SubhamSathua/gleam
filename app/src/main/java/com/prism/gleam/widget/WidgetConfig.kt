@@ -27,10 +27,10 @@ enum class WidgetColorStyle(val label: String) {
 
 data class WidgetConfig(
     val theme: WidgetTheme = WidgetTheme.SYSTEM,
-    val colorStyle: WidgetColorStyle = WidgetColorStyle.MINIMAL_GRADIENT,
+    val colorStyle: WidgetColorStyle = WidgetColorStyle.PLAIN, // Default: Plain
     val opacityPercent: Int = 100, // 50, 70, 100
-    val radiusDp: Int = 70,        // 15 (Minimal), 30 (Rounded), 70 (Capsule)
-    val smoothingPercent: Int = 50 // 0 (None), 50 (Minimal), 100 (Extreme)
+    val radiusDp: Int = 30,        // Default: 30 (Rounded)
+    val smoothingPercent: Int = 0  // Default: 0 (None)
 ) {
     companion object {
         val OPACITY_STOPS = listOf(50, 70, 100)

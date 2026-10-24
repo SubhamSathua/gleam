@@ -74,7 +74,7 @@ class ToggleShortcutActivity : Activity() {
             }
 
             val pinShortcutInfo = ShortcutInfoCompat.Builder(context, SHORTCUT_ID)
-                .setIcon(IconCompat.createWithResource(context, R.drawable.ic_sun_boost))
+                .setIcon(IconCompat.createWithResource(context, R.drawable.ic_shortcut_toggle))
                 .setShortLabel("Toggle Gleam")
                 .setLongLabel("Toggle Sunlight Boost ON/OFF")
                 .setIntent(targetIntent)
