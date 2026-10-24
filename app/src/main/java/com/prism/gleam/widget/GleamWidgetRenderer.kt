@@ -19,17 +19,17 @@ import kotlin.math.roundToInt
 
 enum class WidgetSize {
     SIZE_1X1,
-    SIZE_2X2,
+    SIZE_2X2, // 2 width x 1 height pill capsule
     SIZE_4X4
 }
 
 object GleamWidgetRenderer {
 
     /**
-     * Builds a squircle / smoothed rounded rectangle path based on corner radius and smoothing percentage.
-     * - smoothing = 0: standard circular arc
-     * - smoothing = 50: standard G2 squircle curvature
-     * - smoothing = 100: hyper-elliptical continuous curvature
+     * Builds a mathematically safe, non-inverting squircle / rounded rectangle path:
+     * - If radius >= half min dimension (Capsule): renders a true semicircular capsule pill without pinch artifacts.
+     * - If smoothing == 0: renders a precise circular arc rounded rectangle.
+     * - If smoothing > 0: renders continuous curvature G2 squircle corners where tangents never cross over.
      */
     fun createSquirclePath(rect: RectF, radius: Float, smoothingPercent: Int): Path {
         val path = Path()
@@ -41,53 +41,67 @@ object GleamWidgetRenderer {
             return path
         }
 
+        // For Capsule (radius at or near half-height), preserve true semicircular pill geometry
+        val isCapsule = (r >= maxR * 0.95f)
         val smoothing = (smoothingPercent.coerceIn(0, 100) / 100f)
 
-        if (smoothing <= 0.05f) {
+        if (isCapsule || smoothing <= 0.05f) {
             path.addRoundRect(rect, r, r, Path.Direction.CW)
             return path
         }
 
-        // Smooth cubic Bézier continuous curvature transition
-        val p = smoothing * 0.55f // Bézier tension parameter
-        val offset = r * (1f + p)
+        // Corner smoothing for rectangular / squircle corners:
+        // Borrow a fraction of the available straight edge without exceeding the midpoint
+        val availableEdgeX = (rect.width() - 2 * r).coerceAtLeast(0f) / 2f
+        val availableEdgeY = (rect.height() - 2 * r).coerceAtLeast(0f) / 2f
+
+        val extX = (smoothing * min(r * 0.45f, availableEdgeX))
+        val extY = (smoothing * min(r * 0.45f, availableEdgeY))
+
+        val dX = r + extX
+        val dY = r + extY
+
+        val tension = (0.55228475f - (smoothing * 0.12f))
+        val cpOffsetX = dX * tension
+        val cpOffsetY = dY * tension
+
         val l = rect.left
         val t = rect.top
         val rgt = rect.right
         val b = rect.bottom
 
-        path.moveTo(l + offset, t)
+        path.moveTo(l + dX, t)
 
-        // Top edge to top-right corner
-        path.lineTo(rgt - offset, t)
+        // 1. Top Edge to Top-Right Corner
+        path.lineTo(rgt - dX, t)
         path.cubicTo(
-            rgt - offset + (r * p), t,
-            rgt, t + offset - (r * p),
-            rgt, t + offset
+            rgt - dX + cpOffsetX, t,
+            rgt, t + dY - cpOffsetY,
+            rgt, t + dY
         )
 
-        // Right edge to bottom-right corner
-        path.lineTo(rgt, b - offset)
+        // 2. Right Edge to Bottom-Right Corner
+        path.lineTo(rgt, b - dY)
         path.cubicTo(
-            rgt, b - offset + (r * p),
-            rgt - offset + (r * p), b,
-            rgt - offset, b
+            rgt, b - dY + cpOffsetY,
+            rgt - dX + cpOffsetX, b,
+            rgt - dX, b
         )
 
-        // Bottom edge to bottom-left corner
-        path.lineTo(l + offset, b)
+        // 3. Bottom Edge to Bottom-Left Corner
+        path.lineTo(l + dX, b)
         path.cubicTo(
-            l + offset - (r * p), b,
-            l, b - offset + (r * p),
-            l, b - offset
+            l + dX - cpOffsetX, b,
+            l, b - dY + cpOffsetY,
+            l, b - dY
         )
 
-        // Left edge to top-left corner
-        path.lineTo(l, t + offset)
+        // 4. Left Edge to Top-Left Corner
+        path.lineTo(l, t + dY)
         path.cubicTo(
-            l, t + offset - (r * p),
-            l + offset - (r * p), t,
-            l + offset, t
+            l, t + dY - cpOffsetY,
+            l + dX - cpOffsetX, t,
+            l + dX, t
         )
 
         path.close()
@@ -95,7 +109,10 @@ object GleamWidgetRenderer {
     }
 
     /**
-     * Renders a pixel-perfect, responsive widget bitmap matching Figma designs.
+     * Renders a pixel-perfect, responsive widget bitmap:
+     * - 1x1: Always 1:1 perfect square, centered in the cell.
+     * - 2x1 (2x2 slot): 2 width x 1 height capsule pill, sleek aspect ratio, centered vertically.
+     * - 4x4: Always 1:1 perfect square, centered in the cell.
      */
     fun renderWidgetBitmap(
         context: Context,
@@ -105,8 +122,8 @@ object GleamWidgetRenderer {
         widthPx: Int,
         heightPx: Int
     ): Bitmap {
-        val w = widthPx.coerceAtLeast(120)
-        val h = heightPx.coerceAtLeast(120)
+        val w = widthPx.coerceAtLeast(100)
+        val h = heightPx.coerceAtLeast(100)
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
@@ -115,12 +132,34 @@ object GleamWidgetRenderer {
         val alphaFraction = (config.opacityPercent.coerceIn(0, 100) / 100f)
         val alphaInt = (alphaFraction * 255).roundToInt().coerceIn(0, 255)
 
-        // Outer margin so shadows/launcher grid won't touch the very edge
         val margin = 3f * density
-        val cardRect = RectF(margin, margin, w - margin, h - margin)
+
+        // Determine card bounds with strict geometry guarantees:
+        val cardRect: RectF = when (widgetSize) {
+            WidgetSize.SIZE_1X1, WidgetSize.SIZE_4X4 -> {
+                // Strictly 1:1 Square
+                val cardSide = min(w - 2 * margin, h - 2 * margin)
+                val left = (w - cardSide) / 2f
+                val top = (h - cardSide) / 2f
+                RectF(left, top, left + cardSide, top + cardSide)
+            }
+
+            WidgetSize.SIZE_2X2 -> {
+                // 2 Width x 1 Height Sleek Capsule Pill:
+                // Height is constrained to an optimal pill aspect ratio (~2.15:1 to 2.3:1)
+                val availableW = w - 2 * margin
+                val availableH = h - 2 * margin
+                val idealH = (availableW / 2.2f)
+                val actualH = min(availableH, idealH)
+                val actualW = availableW
+                val left = margin
+                val top = (h - actualH) / 2f
+                RectF(left, top, left + actualW, top + actualH)
+            }
+        }
 
         // Determine corner radius:
-        // Capsule (70dp) on 2x2 should produce full semicircular pill ends
+        // Capsule (70dp) produces full semicircular pill ends
         val baseRadiusPx = config.radiusDp * density
         val effectiveRadiusPx = if (config.radiusDp >= 65) {
             min(cardRect.width(), cardRect.height()) / 2f
@@ -189,9 +228,9 @@ object GleamWidgetRenderer {
         // 4. Render Widget Content based on WidgetSize
         when (widgetSize) {
             WidgetSize.SIZE_1X1 -> {
-                // Centered Faceted Sun
+                // Centered 1:1 Square Faceted Sun
                 if (iconDrawable != null) {
-                    val iconSize = (min(cardRect.width(), cardRect.height()) * 0.58f).roundToInt()
+                    val iconSize = (cardRect.width() * 0.58f).roundToInt()
                     val iconLeft = (cardRect.centerX() - iconSize / 2f).roundToInt()
                     val iconTop = (cardRect.centerY() - iconSize / 2f).roundToInt()
                     iconDrawable.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
@@ -200,7 +239,7 @@ object GleamWidgetRenderer {
             }
 
             WidgetSize.SIZE_2X2 -> {
-                // Horizontal Pill/Card: Icon on Left + Two Lines of Text on Right
+                // 2 Width x 1 Height Pill Card: Icon on Left + Two Lines of Text on Right
                 val cardH = cardRect.height()
                 val iconSize = (cardH * 0.54f).roundToInt()
 
@@ -214,12 +253,11 @@ object GleamWidgetRenderer {
                 }
 
                 val textLeft = iconLeft + iconSize + (cardH * 0.14f)
-                val textRightAvailable = cardRect.right - horizontalPadding
                 val textBlockCenterY = cardRect.centerY()
 
                 // Typography sizes scale proportionally
-                val titleSize = (cardH * 0.22f).coerceAtLeast(14f * density)
-                val subtextSize = (cardH * 0.145f).coerceAtLeast(10f * density)
+                val titleSize = (cardH * 0.22f).coerceAtLeast(13f * density)
+                val subtextSize = (cardH * 0.145f).coerceAtLeast(9.5f * density)
 
                 val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = primaryTextColor
@@ -236,7 +274,6 @@ object GleamWidgetRenderer {
                 val titleText = AppConstants.WIDGET_DEFAULT_TITLE
                 val subText = if (isPoweredOn) AppConstants.WIDGET_STATUS_ON else AppConstants.WIDGET_STATUS_OFF
 
-                // Measure text baseline
                 val titleMetrics = titlePaint.fontMetrics
                 val subMetrics = subtextPaint.fontMetrics
 
@@ -253,12 +290,12 @@ object GleamWidgetRenderer {
             }
 
             WidgetSize.SIZE_4X4 -> {
-                // Centered Square Layout: Big Icon + Upper Title + Upper Subtext
-                val cardMinDim = min(cardRect.width(), cardRect.height())
-                val iconSize = (cardMinDim * 0.44f).roundToInt()
+                // Centered 1:1 Square Layout: Big Icon + Upper Title + Upper Subtext
+                val cardSide = cardRect.width()
+                val iconSize = (cardSide * 0.44f).roundToInt()
 
-                val titleSize = (cardMinDim * 0.10f).coerceAtLeast(15f * density)
-                val subtextSize = (cardMinDim * 0.08f).coerceAtLeast(12f * density)
+                val titleSize = (cardSide * 0.10f).coerceAtLeast(15f * density)
+                val subtextSize = (cardSide * 0.08f).coerceAtLeast(12f * density)
 
                 val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = primaryTextColor
@@ -284,7 +321,7 @@ object GleamWidgetRenderer {
                 val subH = subMetrics.descent - subMetrics.ascent
                 val spacing = 6f * density
 
-                val totalBlockHeight = iconSize + (cardMinDim * 0.08f) + titleH + spacing + subH
+                val totalBlockHeight = iconSize + (cardSide * 0.08f) + titleH + spacing + subH
                 val blockStartY = cardRect.centerY() - (totalBlockHeight / 2f)
 
                 val iconLeft = (cardRect.centerX() - iconSize / 2f).roundToInt()
@@ -295,7 +332,7 @@ object GleamWidgetRenderer {
                     iconDrawable.draw(canvas)
                 }
 
-                val titleY = iconTop + iconSize + (cardMinDim * 0.08f) - titleMetrics.ascent
+                val titleY = iconTop + iconSize + (cardSide * 0.08f) - titleMetrics.ascent
                 val subY = titleY + titleMetrics.descent + spacing - subMetrics.ascent
 
                 canvas.drawText(titleText, cardRect.centerX(), titleY, titlePaint)

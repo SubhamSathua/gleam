@@ -76,11 +76,11 @@
                 android:resource="@xml/widget_info_1x1" />
         </receiver>
 
-        <!-- 2x2 Status Pill Widget -->
+        <!-- 2x1 Status Pill Widget -->
         <receiver
             android:name=".widget.GleamWidget2x2Provider"
             android:exported="true"
-            android:label="Gleam Status Pill (2x2)">
+            android:label="Gleam Status Pill (2x1)">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.prism.gleam.ACTION_TOGGLE_POWER" />
