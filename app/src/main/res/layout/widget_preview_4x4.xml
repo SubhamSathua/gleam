@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp">
+    android:padding="6dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -10,12 +10,12 @@
         android:layout_gravity="center"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="20dp"
+        android:padding="12dp"
         android:background="@drawable/bg_widget_preview_4x4">
 
         <ImageView
-            android:layout_width="96dp"
-            android:layout_height="96dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_sun_faceted_on"
             android:contentDescription="@string/app_name" />
@@ -23,21 +23,21 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:text="GLEAM"
             android:fontFamily="@font/urbanist"
             android:textStyle="bold"
-            android:textSize="22sp"
+            android:textSize="17sp"
             android:includeFontPadding="false"
             android:textColor="@color/widget_preview_text_primary" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:text="ON"
             android:fontFamily="@font/urbanist"
-            android:textSize="15sp"
+            android:textSize="12sp"
             android:includeFontPadding="false"
             android:textColor="@color/widget_preview_text_secondary" />
 

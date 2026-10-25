@@ -4,5 +4,5 @@
     <string name="shortcut_toggle_long">Toggle Auto Sunlight Boost</string>
     <string name="widget_1x1_description">Quick 1-tap Gleam power toggle</string>
     <string name="widget_2x1_description">Compact Gleam status pill widget (2x1)</string>
-    <string name="widget_4x4_description">Full Gleam dashboard widget</string>
+    <string name="widget_4x4_description">Gleam square widget (2x2)</string>
 </resources>

@@ -32,7 +32,7 @@ object GleamWidgetManager {
         val defaultDp = when (size) {
             WidgetSize.SIZE_1X1 -> Pair(80, 80)
             WidgetSize.SIZE_2X2 -> Pair(160, 80)
-            WidgetSize.SIZE_4X4 -> Pair(260, 260)
+            WidgetSize.SIZE_4X4 -> Pair(160, 160) // 2x2 1:1 square
         }
 
         val minWdp = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, defaultDp.first) ?: defaultDp.first

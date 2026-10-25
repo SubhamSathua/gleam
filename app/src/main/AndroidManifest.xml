@@ -91,11 +91,11 @@
                 android:resource="@xml/widget_info_2x2" />
         </receiver>
 
-        <!-- 4x4 Dashboard Widget -->
+        <!-- 2x2 Square Widget -->
         <receiver
             android:name=".widget.GleamWidget4x4Provider"
             android:exported="true"
-            android:label="Gleam Dashboard (4x4)">
+            android:label="Gleam Square (2x2)">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.prism.gleam.ACTION_TOGGLE_POWER" />
