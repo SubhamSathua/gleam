@@ -229,7 +229,8 @@ fun WidgetSettingsScreen(
                         config = currentConfig,
                         isPoweredOn = isPoweredOn,
                         widthPx = previewWidthPx,
-                        heightPx = previewHeightPx
+                        heightPx = previewHeightPx,
+                        drawOutline = true
                     )
                 }
 

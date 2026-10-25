@@ -120,7 +120,8 @@ object GleamWidgetRenderer {
         config: WidgetConfig,
         isPoweredOn: Boolean,
         widthPx: Int,
-        heightPx: Int
+        heightPx: Int,
+        drawOutline: Boolean = false
     ): Bitmap {
         val w = widthPx.coerceAtLeast(100)
         val h = heightPx.coerceAtLeast(100)
@@ -158,13 +159,32 @@ object GleamWidgetRenderer {
             }
         }
 
-        // Determine corner radius:
-        // Capsule (70dp) produces full semicircular pill ends
-        val baseRadiusPx = config.radiusDp * density
-        val effectiveRadiusPx = if (config.radiusDp >= 65) {
-            min(cardRect.width(), cardRect.height()) / 2f
-        } else {
-            baseRadiusPx.coerceAtMost(min(cardRect.width(), cardRect.height()) / 2f)
+        // Determine calibrated corner radius:
+        // - Stop 3 (>= 65dp): True Capsule / Full Circle
+        // - Stop 1 (<= 18dp): Minimal subtle curve
+        // - Stop 2 (Rounded / Default 30dp): Proportional rounded corners preserving clean flat straight edges
+        val minDimension = min(cardRect.width(), cardRect.height())
+        val maxCapsuleRadius = minDimension / 2f
+
+        val effectiveRadiusPx = when {
+            config.radiusDp >= 65 -> {
+                maxCapsuleRadius
+            }
+            config.radiusDp <= 18 -> {
+                when (widgetSize) {
+                    WidgetSize.SIZE_1X1 -> 7f * density
+                    WidgetSize.SIZE_2X2 -> 8f * density
+                    WidgetSize.SIZE_4X4 -> 15f * density
+                }.coerceAtMost(maxCapsuleRadius)
+            }
+            else -> {
+                // Rounded (Default): maintains straight edges, prevents 1x1 & 2x1 from becoming circular
+                when (widgetSize) {
+                    WidgetSize.SIZE_1X1 -> 14f * density
+                    WidgetSize.SIZE_2X2 -> 16f * density
+                    WidgetSize.SIZE_4X4 -> 30f * density
+                }.coerceAtMost(maxCapsuleRadius * 0.72f)
+            }
         }
 
         // 1. Draw Background Path (Plain or Minimal Gradient)
@@ -208,6 +228,20 @@ object GleamWidgetRenderer {
         }
 
         canvas.drawPath(backgroundPath, backgroundPaint)
+
+        // Draw 50% opacity outline if requested (e.g. for preview or widget boundaries)
+        if (drawOutline) {
+            val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 1.5f * density
+                color = if (isDark) {
+                    Color.argb(128, 255, 255, 255) // 50% white
+                } else {
+                    Color.argb(128, 0, 0, 0)       // 50% black
+                }
+            }
+            canvas.drawPath(backgroundPath, outlinePaint)
+        }
 
         // 2. Select Faceted Sun Icon
         val iconResId = if (isPoweredOn) {

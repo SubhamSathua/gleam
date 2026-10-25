@@ -10,4 +10,5 @@
     android:resizeMode="none"
     android:widgetCategory="home_screen"
     android:description="@string/widget_2x1_description"
-    android:previewImage="@drawable/ic_sun_faceted_on" />
+    android:previewLayout="@layout/widget_preview_2x1"
+    android:previewImage="@drawable/widget_preview_2x1" />

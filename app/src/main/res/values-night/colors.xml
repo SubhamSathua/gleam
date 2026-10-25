@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget Preview Theme Colors (Dark) -->
+    <color name="widget_preview_bg">#FF242424</color>
+    <color name="widget_preview_outline">#80FFFFFF</color>
+    <color name="widget_preview_text_primary">#FFFFFFFF</color>
+    <color name="widget_preview_text_secondary">#FFB0B6C2</color>
+</resources>
