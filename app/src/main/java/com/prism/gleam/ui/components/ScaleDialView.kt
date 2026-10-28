@@ -85,9 +85,9 @@ fun ScaleDialView(
             val center = Offset(size.width / 2f, size.height / 2f)
             val arcRadius = 105.dp.toPx()
 
-            // (A) Draw Outer Clean Hairline Ticks & Labels (10°, 15°, 20°, 25°, 30°)
+            // (A) Draw Outer Clean Hairline Ticks & Labels (0%, 25%, 50%, 75%, 100%)
             val numTicks = 17
-            val labels = listOf("10°", "15°", "20°", "25°", "30°")
+            val labels = listOf("0%", "25%", "50%", "75%", "100%")
             val tickPaint = Paint().apply {
                 color = colors.textMuted.toArgb()
                 textSize = 13.5.dp.toPx()
@@ -136,7 +136,7 @@ fun ScaleDialView(
                 }
             }
 
-            // (B) Inactive Recessed Ambient Track Groove
+            // (B) Inactive Recessed Ambient Track Groove (Straight ends, not capsule)
             drawArc(
                 color = colors.trackBackground,
                 startAngle = startAngle,
@@ -144,7 +144,7 @@ fun ScaleDialView(
                 useCenter = false,
                 topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                 size = Size(arcRadius * 2f, arcRadius * 2f),
-                style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Round)
+                style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Butt)
             )
         }
 
@@ -247,7 +247,7 @@ fun ScaleDialView(
 
                 // Rotated to startAngle so 0.0f aligns exactly with start of arc (150°)
                 rotate(degrees = startAngle, pivot = center) {
-                    // 1. Ambient Light Plume: from start to knob only (Diffused aura)
+                    // 1. Ambient Light Plume: from start to knob only (Diffused aura, straight start)
                     drawArc(
                         brush = arcBrush,
                         startAngle = 0f,
@@ -255,7 +255,7 @@ fun ScaleDialView(
                         useCenter = false,
                         topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                         size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 40.dp.toPx(), cap = StrokeCap.Round),
+                        style = Stroke(width = 40.dp.toPx(), cap = StrokeCap.Butt),
                         alpha = 0.35f * auraAlpha
                     )
 
@@ -267,7 +267,7 @@ fun ScaleDialView(
                         useCenter = false,
                         topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                         size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 28.dp.toPx(), cap = StrokeCap.Round),
+                        style = Stroke(width = 28.dp.toPx(), cap = StrokeCap.Butt),
                         alpha = 0.60f * auraAlpha
                     )
 
@@ -279,7 +279,7 @@ fun ScaleDialView(
                         useCenter = false,
                         topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                         size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
+                        style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Butt)
                     )
                 }
             }
