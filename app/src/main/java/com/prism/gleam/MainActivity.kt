@@ -141,6 +141,8 @@ fun GleamAppRoot(
                     onAutoBrightnessChange = {
                         isAutoBrightness = it
                         GleamPreferences.setAutoBrightness(context, it)
+                        val activity = context as? android.app.Activity
+                        BrightnessController.setSystemAutoBrightness(context, activity, it)
                     },
                     onMinBrightnessChange = {
                         minBrightness = it
@@ -235,9 +237,17 @@ fun GleamMainScreen(
                         isPoweredOn = newPower
                         powerToggleTrigger++
                         val activity = context as? ComponentActivity
+                        val isAuto = GleamPreferences.isAutoBrightness(context)
                         if (newPower) {
-                            BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                            if (isAuto) {
+                                BrightnessController.setSystemAutoBrightness(context, activity, true)
+                            } else {
+                                BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                            }
                         } else {
+                            if (isAuto) {
+                                BrightnessController.setSystemAutoBrightness(context, activity, false)
+                            }
                             BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                         }
                     }
@@ -276,12 +286,8 @@ fun GleamMainScreen(
         }
     }
 
-    // Real Android Hardware Ambient Light Sensor (TYPE_LIGHT) - 100% Deterministic & Hardware-accurate
-    DisposableEffect(lifecycleOwner, isPoweredOn, isPermissionGranted, isAutoBrightness) {
-        if (!isPoweredOn || !isPermissionGranted || !isAutoBrightness) {
-            return@DisposableEffect onDispose { }
-        }
-
+    // Real Android Hardware Ambient Light Sensor (TYPE_LIGHT) - Keeps the lux scale LIVE in real-time
+    DisposableEffect(lifecycleOwner, isPermissionGranted) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         val lightSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_LIGHT)
         var sensorListener: SensorEventListener? = null
@@ -296,16 +302,6 @@ fun GleamMainScreen(
                     currentSensorFraction = fraction
                     previousValue = (fraction * 100).roundToInt()
                     GleamPreferences.setPreviousValue(context, previousValue)
-
-                    // Execute real hardware sunlight brightness override:
-                    // At 40,000 lx, targetBrightness is 255 (maximum peak hardware boost)
-                    val activity = context as? ComponentActivity
-                    BrightnessController.applySunlightBrightness(
-                        context = context,
-                        activity = activity,
-                        lux = rawLux,
-                        isPoweredOn = isPoweredOn
-                    )
                 }
 
                 override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
@@ -397,8 +393,15 @@ fun GleamMainScreen(
                                 RestoreMode.CUSTOM -> customFloorValue / 100f
                                 RestoreMode.AUTO -> luxToScaleFraction(currentLux)
                             }
-                            BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                            if (isAutoBrightness) {
+                                BrightnessController.setSystemAutoBrightness(context, activity, true)
+                            } else {
+                                BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                            }
                         } else {
+                            if (isAutoBrightness) {
+                                BrightnessController.setSystemAutoBrightness(context, activity, false)
+                            }
                             BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                         }
 

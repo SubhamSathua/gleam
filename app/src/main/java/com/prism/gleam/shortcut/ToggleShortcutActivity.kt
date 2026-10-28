@@ -27,12 +27,20 @@ class ToggleShortcutActivity : Activity() {
 
         // Master single pointer toggle (exact same state as Quick Tile and in-app ON/OFF button)
         val isNowOn = GleamPreferences.togglePoweredOn(this)
+        val isAuto = GleamPreferences.isAutoBrightness(this)
         val statusText = if (isNowOn) "Sunlight Boost: ON" else "Sunlight Boost: OFF"
         Toast.makeText(this, "Gleam: $statusText", Toast.LENGTH_SHORT).show()
 
         if (isNowOn) {
-            BrightnessController.triggerOneShotSunlightBoost(this)
+            if (isAuto) {
+                BrightnessController.setSystemAutoBrightness(this, null, true)
+            } else {
+                BrightnessController.triggerOneShotSunlightBoost(this)
+            }
         } else {
+            if (isAuto) {
+                BrightnessController.setSystemAutoBrightness(this, null, false)
+            }
             val restoreMode = try {
                 RestoreMode.valueOf(GleamPreferences.getRestoreMode(this))
             } catch (_: Exception) {

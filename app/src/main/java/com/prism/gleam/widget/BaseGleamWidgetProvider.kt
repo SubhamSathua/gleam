@@ -56,12 +56,20 @@ abstract class BaseGleamWidgetProvider(
 
                 // Toggle master power state (single pointer sync)
                 val isNowOn = GleamPreferences.togglePoweredOn(context)
+                val isAuto = GleamPreferences.isAutoBrightness(context)
                 val toastMsg = if (isNowOn) "Gleam: Boost ON" else "Gleam: Standby"
                 Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
 
                 if (isNowOn) {
-                    BrightnessController.triggerOneShotSunlightBoost(context)
+                    if (isAuto) {
+                        BrightnessController.setSystemAutoBrightness(context, null, true)
+                    } else {
+                        BrightnessController.triggerOneShotSunlightBoost(context)
+                    }
                 } else {
+                    if (isAuto) {
+                        BrightnessController.setSystemAutoBrightness(context, null, false)
+                    }
                     val restoreMode = try {
                         RestoreMode.valueOf(GleamPreferences.getRestoreMode(context))
                     } catch (_: Exception) {

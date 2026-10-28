@@ -23,6 +23,55 @@ object BrightnessController {
     private var originalBrightnessVal: Int? = null
 
     /**
+     * Toggles Android's native adaptive auto-brightness mode (AUTOMATIC / MANUAL).
+     * When Auto mode is turned ON, turns ON system auto brightness.
+     * When Auto mode is turned OFF, turns OFF system auto brightness.
+     */
+    fun setSystemAutoBrightness(context: Context, activity: Activity?, enabled: Boolean) {
+        if (!canWriteSystemSettings(context)) {
+            Log.w(TAG, "Cannot change brightness mode: WRITE_SETTINGS permission not granted")
+            return
+        }
+        try {
+            val resolver = context.contentResolver
+            val mode = if (enabled) {
+                Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+            } else {
+                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            }
+            Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, mode)
+
+            // Reset WindowManager local brightness override so the system controls display brightness
+            activity?.let { act ->
+                act.runOnUiThread {
+                    val lp = act.window.attributes
+                    lp.screenBrightness = -1.0f
+                    act.window.attributes = lp
+                }
+            }
+            Log.d(TAG, "Set system brightness mode to: ${if (enabled) "AUTOMATIC" else "MANUAL"}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting system brightness mode", e)
+        }
+    }
+
+    /**
+     * Checks if Android system auto-brightness is currently enabled.
+     */
+    fun isSystemAutoBrightness(context: Context): Boolean {
+        return try {
+            val mode = Settings.System.getInt(
+                context.contentResolver,
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            )
+            mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
      * Maps ambient light in lux (0..40,000+ lx) directly to Android system brightness (0..255)
      * interpolated between user-configured minimum floor and maximum ceiling (defaults: 10% min, 100% max):
      * - 0 lx (pitch black): minPercent (e.g. 10% = 26)
@@ -133,10 +182,12 @@ object BrightnessController {
 
             when (mode) {
                 RestoreMode.PREVIOUS -> {
+                    Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
                     val restoreVal = (previousValue * 2.55f).roundToInt().coerceIn(0, 255)
                     Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, restoreVal)
                 }
                 RestoreMode.CUSTOM -> {
+                    Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
                     val floorVal = (customFloorValue * 2.55f).roundToInt().coerceIn(0, 255)
                     Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, floorVal)
                 }
@@ -171,6 +222,11 @@ object BrightnessController {
      */
     fun triggerOneShotSunlightBoost(context: Context) {
         if (!canWriteSystemSettings(context)) return
+
+        if (GleamPreferences.isAutoBrightness(context)) {
+            setSystemAutoBrightness(context, null, true)
+            return
+        }
 
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         val lightSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_LIGHT)

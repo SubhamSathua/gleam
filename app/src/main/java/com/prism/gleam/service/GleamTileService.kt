@@ -41,10 +41,18 @@ class GleamTileService : TileService() {
         // Toggle master power state (single pointer sync)
         val isNowOn = GleamPreferences.togglePoweredOn(this)
         updateTileState()
+        val isAuto = GleamPreferences.isAutoBrightness(this)
 
         if (isNowOn) {
-            BrightnessController.triggerOneShotSunlightBoost(this)
+            if (isAuto) {
+                BrightnessController.setSystemAutoBrightness(this, null, true)
+            } else {
+                BrightnessController.triggerOneShotSunlightBoost(this)
+            }
         } else {
+            if (isAuto) {
+                BrightnessController.setSystemAutoBrightness(this, null, false)
+            }
             val restoreMode = try {
                 RestoreMode.valueOf(GleamPreferences.getRestoreMode(this))
             } catch (_: Exception) {
