@@ -40,19 +40,20 @@ class ToggleShortcutActivity : Activity() {
         } else {
             if (isAuto) {
                 BrightnessController.setSystemAutoBrightness(this, null, false)
+            } else {
+                val restoreMode = try {
+                    RestoreMode.valueOf(GleamPreferences.getRestoreMode(this))
+                } catch (_: Exception) {
+                    RestoreMode.PREVIOUS
+                }
+                BrightnessController.restoreBrightness(
+                    this,
+                    null,
+                    restoreMode,
+                    GleamPreferences.getPreviousValue(this),
+                    GleamPreferences.getCustomFloorValue(this)
+                )
             }
-            val restoreMode = try {
-                RestoreMode.valueOf(GleamPreferences.getRestoreMode(this))
-            } catch (_: Exception) {
-                RestoreMode.PREVIOUS
-            }
-            BrightnessController.restoreBrightness(
-                this,
-                null,
-                restoreMode,
-                GleamPreferences.getPreviousValue(this),
-                GleamPreferences.getCustomFloorValue(this)
-            )
         }
 
         // Notify Quick Settings Tile to refresh state

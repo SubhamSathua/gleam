@@ -69,19 +69,20 @@ abstract class BaseGleamWidgetProvider(
                 } else {
                     if (isAuto) {
                         BrightnessController.setSystemAutoBrightness(context, null, false)
+                    } else {
+                        val restoreMode = try {
+                            RestoreMode.valueOf(GleamPreferences.getRestoreMode(context))
+                        } catch (_: Exception) {
+                            RestoreMode.PREVIOUS
+                        }
+                        BrightnessController.restoreBrightness(
+                            context,
+                            null,
+                            restoreMode,
+                            GleamPreferences.getPreviousValue(context),
+                            GleamPreferences.getCustomFloorValue(context)
+                        )
                     }
-                    val restoreMode = try {
-                        RestoreMode.valueOf(GleamPreferences.getRestoreMode(context))
-                    } catch (_: Exception) {
-                        RestoreMode.PREVIOUS
-                    }
-                    BrightnessController.restoreBrightness(
-                        context,
-                        null,
-                        restoreMode,
-                        GleamPreferences.getPreviousValue(context),
-                        GleamPreferences.getCustomFloorValue(context)
-                    )
                 }
 
                 // Notify Quick Settings Tile

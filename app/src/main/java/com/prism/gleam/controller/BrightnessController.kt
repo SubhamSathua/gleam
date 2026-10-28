@@ -39,7 +39,15 @@ object BrightnessController {
             } else {
                 Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
             }
-            Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, mode)
+            val success = Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, mode)
+
+            if (!enabled) {
+                // When turning off auto brightness, explicitly set the screen brightness to current value in manual mode
+                try {
+                    val currentVal = Settings.System.getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, 128)
+                    Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, currentVal)
+                } catch (_: Exception) {}
+            }
 
             // Reset WindowManager local brightness override so the system controls display brightness
             activity?.let { act ->
@@ -49,7 +57,7 @@ object BrightnessController {
                     act.window.attributes = lp
                 }
             }
-            Log.d(TAG, "Set system brightness mode to: ${if (enabled) "AUTOMATIC" else "MANUAL"}")
+            Log.d(TAG, "Set system brightness mode to: ${if (enabled) "AUTOMATIC" else "MANUAL"} (success=$success)")
         } catch (e: Exception) {
             Log.e(TAG, "Error setting system brightness mode", e)
         }
@@ -179,25 +187,41 @@ object BrightnessController {
 
         try {
             val resolver = context.contentResolver
+            val isAuto = GleamPreferences.isAutoBrightness(context)
 
-            when (mode) {
-                RestoreMode.PREVIOUS -> {
-                    Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-                    val restoreVal = (previousValue * 2.55f).roundToInt().coerceIn(0, 255)
-                    Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, restoreVal)
+            if (isAuto) {
+                // When Auto mode is turned OFF, turn OFF system auto brightness
+                Settings.System.putInt(
+                    resolver,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+                )
+                val targetPercent = when (mode) {
+                    RestoreMode.CUSTOM -> customFloorValue
+                    RestoreMode.PREVIOUS, RestoreMode.AUTO -> previousValue
                 }
-                RestoreMode.CUSTOM -> {
-                    Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-                    val floorVal = (customFloorValue * 2.55f).roundToInt().coerceIn(0, 255)
-                    Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, floorVal)
-                }
-                RestoreMode.AUTO -> {
-                    // Restore Android's default adaptive automatic brightness mode
-                    Settings.System.putInt(
-                        resolver,
-                        Settings.System.SCREEN_BRIGHTNESS_MODE,
-                        Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-                    )
+                val restoreVal = (targetPercent * 2.55f).roundToInt().coerceIn(0, 255)
+                Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, restoreVal)
+            } else {
+                when (mode) {
+                    RestoreMode.PREVIOUS -> {
+                        Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
+                        val restoreVal = (previousValue * 2.55f).roundToInt().coerceIn(0, 255)
+                        Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, restoreVal)
+                    }
+                    RestoreMode.CUSTOM -> {
+                        Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
+                        val floorVal = (customFloorValue * 2.55f).roundToInt().coerceIn(0, 255)
+                        Settings.System.putInt(resolver, Settings.System.SCREEN_BRIGHTNESS, floorVal)
+                    }
+                    RestoreMode.AUTO -> {
+                        // Restore Android's default adaptive automatic brightness mode
+                        Settings.System.putInt(
+                            resolver,
+                            Settings.System.SCREEN_BRIGHTNESS_MODE,
+                            Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                        )
+                    }
                 }
             }
 

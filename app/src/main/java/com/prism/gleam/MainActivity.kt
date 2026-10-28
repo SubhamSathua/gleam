@@ -247,8 +247,9 @@ fun GleamMainScreen(
                         } else {
                             if (isAuto) {
                                 BrightnessController.setSystemAutoBrightness(context, activity, false)
+                            } else {
+                                BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                             }
-                            BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                         }
                     }
                 }
@@ -401,8 +402,9 @@ fun GleamMainScreen(
                         } else {
                             if (isAutoBrightness) {
                                 BrightnessController.setSystemAutoBrightness(context, activity, false)
+                            } else {
+                                BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                             }
-                            BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
                         }
 
                         // Sync notification shade Quick Settings tile and widgets
