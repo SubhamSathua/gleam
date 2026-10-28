@@ -136,7 +136,7 @@ fun ScaleDialView(
                 }
             }
 
-            // (B) Inactive Recessed Ambient Track Groove (Straight ends, not capsule)
+            // (B) Inactive Recessed Ambient Track Groove (Rounded-capsule start and end)
             drawArc(
                 color = colors.trackBackground,
                 startAngle = startAngle,
@@ -144,7 +144,7 @@ fun ScaleDialView(
                 useCenter = false,
                 topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                 size = Size(arcRadius * 2f, arcRadius * 2f),
-                style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Butt)
+                style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Round)
             )
         }
 
@@ -247,7 +247,7 @@ fun ScaleDialView(
 
                 // Rotated to startAngle so 0.0f aligns exactly with start of arc (150°)
                 rotate(degrees = startAngle, pivot = center) {
-                    // 1. Ambient Light Plume: from start to knob only (Diffused aura, straight start)
+                    // 1. Ambient Light Plume: from start to knob only (Diffused aura, rounded capsule start)
                     drawArc(
                         brush = arcBrush,
                         startAngle = 0f,
@@ -255,7 +255,7 @@ fun ScaleDialView(
                         useCenter = false,
                         topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                         size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 40.dp.toPx(), cap = StrokeCap.Butt),
+                        style = Stroke(width = 40.dp.toPx(), cap = StrokeCap.Round),
                         alpha = 0.35f * auraAlpha
                     )
 
@@ -267,7 +267,7 @@ fun ScaleDialView(
                         useCenter = false,
                         topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                         size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 28.dp.toPx(), cap = StrokeCap.Butt),
+                        style = Stroke(width = 28.dp.toPx(), cap = StrokeCap.Round),
                         alpha = 0.60f * auraAlpha
                     )
 
@@ -279,7 +279,7 @@ fun ScaleDialView(
                         useCenter = false,
                         topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
                         size = Size(arcRadius * 2f, arcRadius * 2f),
-                        style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Butt)
+                        style = Stroke(width = 22.dp.toPx(), cap = StrokeCap.Round)
                     )
                 }
             }
