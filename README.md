@@ -1,15 +1,23 @@
 # Gleam
+<p align="center">
+  <img src=".github/icons/logo.png" alt="Logo" width="128">
+  <br>
+  <b>Instant auto-brightness by widgets, shortcuts, and notification tile.</b>
+</p>
 
-**Automatic sunlight screen brightness booster for Android.**
+<p align="center">
+  <a href="#-how-to-install">Jump to Install</a> • <a href="#-screenshots">Screenshots</a>
+</p>
 
-Gleam boosts display brightness to maximum when physical sensors detect direct sunlight, automatically restoring your preferred level indoors. It operates 100% on-device with zero network permissions.
+Gleam provides the fastest way to control your display auto-brightness. It operates 100% on-device with zero network permissions, letting you manage your screen brightness with a single tap.
 
 **Use Case:**
-Phones struggle with screen visibility under direct sunlight, requiring slow manual slider adjustments or delayed OS auto-brightness. Gleam instantly ramps display backlight when high lux levels are detected and safely restores your preferred brightness when light drops or the screen turns off.
+Digging through **system menus** or **swiping down** multiple times just to toggle auto-brightness is tedious and time-consuming. Gleam puts brightness control right at your fingertips, allowing you to instantly switch between manual and auto-brightness directly from your home screen or notification panel whenever your lighting conditions change.
 
 ---
 
 ## # Index
+- [Screenshots](#-screenshots)
 - [Features](#-features)
 - [Installation and Download](#-how-to-install)
 - [Contribute](#-how-to-contribute)
@@ -20,6 +28,16 @@ Phones struggle with screen visibility under direct sunlight, requiring slow man
 - [Links](#-links)
 - [Contributing / Developing](#-contributing--developing)
 - [Author](#-author)
+
+---
+
+## # Screenshots
+
+> [.github/screenshots/Screenshots.md](.github/screenshots/Screenshots.md)
+
+| Home | Widget Settings | Widget | All Shortcuts |
+| :---: | :---: | :---: | :---: |
+| <img src=".github/screenshots/home.png" width="200" alt="Home" /> | <img src=".github/screenshots/widget-settings.png" width="200" alt="Widget Settings" /> | <img src=".github/screenshots/widget.png" width="200" alt="Widget" /> | <img src=".github/screenshots/all-shortcuts.png" width="200" alt="All Shortcuts" /> |
 
 ---
 
