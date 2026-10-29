@@ -53,6 +53,7 @@ import com.prism.gleam.ui.components.AboutScreen
 import com.prism.gleam.ui.components.EnergyPulseOverlay
 import com.prism.gleam.ui.components.FeedbackScreen
 import com.prism.gleam.ui.components.GleamHaptics
+import com.prism.gleam.ui.components.LiveLuxCounterBadge
 import com.prism.gleam.ui.components.PermissionWarningCard
 import com.prism.gleam.ui.components.PermissionsScreen
 import com.prism.gleam.ui.components.PrivacyPolicyScreen
@@ -374,58 +375,65 @@ fun GleamMainScreen(
                 )
             }
 
-            // 2. Scale Dial View with Seamless Button (Zero Gap, disabled when no permission)
-            ScaleDialView(
-                sensorLightFraction = currentSensorFraction,
-                isPoweredOn = isPoweredOn,
-                enabled = isPermissionGranted,
-                onPowerToggle = {
-                    if (isPermissionGranted) {
-                        val willBeOn = !isPoweredOn
-                        GleamHaptics.playPowerToggle(view, context, isTurningOn = willBeOn)
-                        powerToggleTrigger++
-                        isPoweredOn = willBeOn
-                        GleamPreferences.setPoweredOn(context, willBeOn)
-                        val activity = context as? ComponentActivity
+            // 2. Scale Dial View with Seamless Button & Live Lux Counter Badge directly below ON/OFF circle
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ScaleDialView(
+                    sensorLightFraction = currentSensorFraction,
+                    isPoweredOn = isPoweredOn,
+                    enabled = isPermissionGranted,
+                    onPowerToggle = {
+                        if (isPermissionGranted) {
+                            val willBeOn = !isPoweredOn
+                            GleamHaptics.playPowerToggle(view, context, isTurningOn = willBeOn)
+                            powerToggleTrigger++
+                            isPoweredOn = willBeOn
+                            GleamPreferences.setPoweredOn(context, willBeOn)
+                            val activity = context as? ComponentActivity
 
-                        if (willBeOn) {
-                            currentSensorFraction = when (restoreMode) {
-                                RestoreMode.PREVIOUS -> previousValue / 100f
-                                RestoreMode.CUSTOM -> customFloorValue / 100f
-                                RestoreMode.AUTO -> luxToScaleFraction(currentLux)
-                            }
-                            if (isAutoBrightness) {
-                                BrightnessController.setSystemAutoBrightness(context, activity, true)
+                            if (willBeOn) {
+                                currentSensorFraction = when (restoreMode) {
+                                    RestoreMode.PREVIOUS -> previousValue / 100f
+                                    RestoreMode.CUSTOM -> customFloorValue / 100f
+                                    RestoreMode.AUTO -> luxToScaleFraction(currentLux)
+                                }
+                                if (isAutoBrightness) {
+                                    BrightnessController.setSystemAutoBrightness(context, activity, true)
+                                } else {
+                                    BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                                }
                             } else {
-                                BrightnessController.applySunlightBrightness(context, activity, currentLux, true)
+                                if (isAutoBrightness) {
+                                    BrightnessController.setSystemAutoBrightness(context, activity, false)
+                                } else {
+                                    BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
+                                }
                             }
-                        } else {
-                            if (isAutoBrightness) {
-                                BrightnessController.setSystemAutoBrightness(context, activity, false)
-                            } else {
-                                BrightnessController.restoreBrightness(context, activity, restoreMode, previousValue, customFloorValue)
-                            }
+
+                            // Sync notification shade Quick Settings tile and widgets
+                            GleamPreferences.requestTileUpdate(context)
+                            com.prism.gleam.widget.GleamWidgetManager.updateAllWidgets(context)
+                            context.sendBroadcast(
+                                android.content.Intent(GleamPreferences.ACTION_TOGGLE_POWER).setPackage(context.packageName)
+                            )
                         }
-
-                        // Sync notification shade Quick Settings tile and widgets
-                        GleamPreferences.requestTileUpdate(context)
-                        com.prism.gleam.widget.GleamWidgetManager.updateAllWidgets(context)
-                        context.sendBroadcast(
-                            android.content.Intent(GleamPreferences.ACTION_TOGGLE_POWER).setPackage(context.packageName)
-                        )
                     }
-                }
-            )
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Live lux counter placed below ON/OFF circle
+                LiveLuxCounterBadge(
+                    lux = currentLux,
+                    isPoweredOn = isPoweredOn && isPermissionGranted
+                )
+            }
 
             // 3. Middle "When Screen Off" Capsule Card (disabled when no permission)
             Column(modifier = Modifier.fillMaxWidth()) {
                 WhenOffCapsule(
                     mode = restoreMode,
-                    previewValue = when (restoreMode) {
-                        RestoreMode.PREVIOUS -> previousValue
-                        RestoreMode.CUSTOM -> customFloorValue
-                        RestoreMode.AUTO -> currentLux.roundToInt()
-                    },
                     enabled = isPermissionGranted,
                     onClick = {
                         if (isPermissionGranted) {

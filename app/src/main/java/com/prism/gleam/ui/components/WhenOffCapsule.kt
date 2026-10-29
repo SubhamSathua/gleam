@@ -1,8 +1,12 @@
 package com.prism.gleam.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,7 +18,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,36 +30,56 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prism.gleam.ui.theme.GleamTheme
 
-enum class RestoreMode(val label: String) {
-    PREVIOUS("Return to Previous"),
-    CUSTOM("Return to Custom Floor"),
-    AUTO("Return to Last Auto Sensor")
+enum class RestoreMode(val title: String, val description: String) {
+    PREVIOUS(
+        title = "Previous Brightness",
+        description = "Brightness level before turning on auto"
+    ),
+    CUSTOM(
+        title = "Custom Brightness",
+        description = "Set a fixed brightness level"
+    ),
+    AUTO(
+        title = "Last Auto Brightness",
+        description = "Last sensor reading before turning off"
+    );
+
+    val label: String get() = title
 }
 
 @Composable
 fun WhenOffCapsule(
     mode: RestoreMode,
-    previewValue: Int,
+    previewValue: Int = 0,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
     val colors = GleamTheme.colors
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val subtitle = when (mode) {
-        RestoreMode.PREVIOUS -> "Return to Previous ($previewValue%)"
-        RestoreMode.CUSTOM -> "Return to Custom Floor ($previewValue%)"
-        RestoreMode.AUTO -> "Return to Auto Sensor ($previewValue lx)"
-    }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && enabled) 0.985f else 1.0f,
+        label = "whenOffCapsuleScale"
+    )
+
+    val subtitle = mode.title
 
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .shadow(
                 elevation = if (!enabled) 0.dp else if (colors.isDark) 6.dp else 12.dp,
                 shape = RoundedCornerShape(26.dp),
@@ -61,11 +87,27 @@ fun WhenOffCapsule(
                 spotColor = colors.contrastButton.copy(alpha = 0.12f)
             )
             .clip(RoundedCornerShape(26.dp))
-            .background(if (enabled) colors.cardBackground else colors.cardBackground.copy(alpha = 0.6f))
+            .background(
+                when {
+                    !enabled -> colors.cardBackground.copy(alpha = 0.6f)
+                    isPressed -> colors.cardBackground.copy(alpha = 0.88f)
+                    isHovered -> colors.cardBackground.copy(alpha = 0.95f)
+                    else -> colors.cardBackground
+                }
+            )
+            .border(
+                width = 1.dp,
+                color = when {
+                    isPressed -> colors.primaryAccent.copy(alpha = 0.5f)
+                    isHovered -> colors.primaryAccent.copy(alpha = 0.3f)
+                    else -> colors.trackGroove
+                },
+                shape = RoundedCornerShape(26.dp)
+            )
             .clickable(
                 enabled = enabled,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+                interactionSource = interactionSource,
+                indication = ripple(color = colors.primaryAccent),
                 onClick = onClick
             )
             .padding(horizontal = 18.dp, vertical = 16.dp)

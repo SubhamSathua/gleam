@@ -1,9 +1,13 @@
 package com.prism.gleam.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -23,12 +28,15 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,8 +112,8 @@ fun WhenOffBottomSheet(
 
             // Option 1: Previous Value
             OptionItem(
-                title = "Return to Previous Value",
-                tag = "$previousValue%",
+                title = "Previous Brightness",
+                description = "Restore level from before turning on Auto",
                 isSelected = currentMode == RestoreMode.PREVIOUS,
                 onClick = { onModeSelect(RestoreMode.PREVIOUS) }
             )
@@ -114,8 +122,8 @@ fun WhenOffBottomSheet(
 
             // Option 2: Custom Floor Value
             OptionItem(
-                title = "Return to Custom Floor",
-                tag = "$customFloorValue%",
+                title = "Custom Brightness",
+                description = "Set a specific fixed brightness level",
                 isSelected = currentMode == RestoreMode.CUSTOM,
                 onClick = { onModeSelect(RestoreMode.CUSTOM) }
             )
@@ -124,8 +132,28 @@ fun WhenOffBottomSheet(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 6.dp)
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
                 ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Fixed Level",
+                            color = colors.textSub,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "$customFloorValue%",
+                            color = colors.primaryAccent,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     Slider(
                         value = customFloorValue.toFloat(),
                         onValueChange = { onCustomFloorChange(it.toInt()) },
@@ -143,8 +171,8 @@ fun WhenOffBottomSheet(
 
             // Option 3: Auto Sensor
             OptionItem(
-                title = "Return to Last Auto Sensor",
-                tag = "Adaptive Lux",
+                title = "Last Auto Brightness",
+                description = "Keep the last sensor reading before turning off",
                 isSelected = currentMode == RestoreMode.AUTO,
                 onClick = { onModeSelect(RestoreMode.AUTO) }
             )
@@ -175,69 +203,97 @@ fun WhenOffBottomSheet(
 @Composable
 private fun OptionItem(
     title: String,
-    tag: String,
+    description: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     val colors = GleamTheme.colors
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.985f else 1.0f,
+        label = "optionItemScale"
+    )
+
+    val backgroundColor = when {
+        isPressed -> colors.primaryAccent.copy(alpha = if (isSelected) 0.20f else 0.10f)
+        isHovered -> colors.primaryAccent.copy(alpha = if (isSelected) 0.16f else 0.06f)
+        isSelected -> colors.primaryAccent.copy(alpha = 0.08f)
+        else -> colors.canvas
+    }
+
+    val borderColor = when {
+        isSelected -> colors.primaryAccent.copy(alpha = if (isPressed) 0.9f else 0.65f)
+        isHovered -> colors.textMuted.copy(alpha = 0.4f)
+        else -> colors.trackBackground.copy(alpha = 0.6f)
+    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(18.dp))
-            .background(
-                if (isSelected) colors.primaryAccent.copy(alpha = 0.08f) else colors.canvas
+            .background(backgroundColor)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(18.dp)
             )
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+                interactionSource = interactionSource,
+                indication = ripple(color = colors.primaryAccent),
                 onClick = onClick
             )
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Radio circle
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) colors.primaryAccent else colors.canvas
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isSelected) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                    )
-                }
+        // Radio circle: clearly visible whether checked or unchecked
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .then(
+                    if (isSelected) {
+                        Modifier.background(colors.primaryAccent)
+                    } else {
+                        Modifier
+                            .background(colors.cardBackground)
+                            .border(2.dp, colors.textMuted.copy(alpha = 0.55f), CircleShape)
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                )
             }
+        }
 
+        Spacer(modifier = Modifier.width(14.dp))
+
+        // Title and Description (No % near title)
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 color = colors.textTitle,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 12.dp)
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(colors.cardBackground)
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = tag,
-                color = colors.primaryAccent,
-                fontSize = 12.sp,
+                fontSize = 14.5.sp,
                 fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = description,
+                color = colors.textSub,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Normal,
+                modifier = Modifier.padding(top = 2.dp)
             )
         }
     }
