@@ -68,11 +68,13 @@ fun SettingsScreen(
     isAutoBrightness: Boolean,
     minBrightness: Int,
     maxBrightness: Int,
+    isHapticFeedback: Boolean,
     onThemeModeChange: (ThemeMode) -> Unit,
     onAmoledChange: (Boolean) -> Unit,
     onAutoBrightnessChange: (Boolean) -> Unit,
     onMinBrightnessChange: (Int) -> Unit,
     onMaxBrightnessChange: (Int) -> Unit,
+    onHapticFeedbackChange: (Boolean) -> Unit,
     onNavigatePermissions: () -> Unit,
     onNavigateFeedback: () -> Unit,
     onNavigatePrivacyPolicy: () -> Unit,
@@ -415,7 +417,47 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 4. Section: Permissions Card (Opens Dedicated Page)
+            // 4. Section: Haptics & Vibration
+            SectionHeader(title = "Haptics & Vibration")
+
+            SettingsCard {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Vibration Feedback",
+                            color = colors.textTitle,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Vibrate on power toggle and touch controls",
+                            color = colors.textSub,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    GleamSwitch(
+                        checked = isHapticFeedback,
+                        onCheckedChange = {
+                            onHapticFeedbackChange(it)
+                            if (it) {
+                                GleamHaptics.playPowerToggle(view, context, isTurningOn = true)
+                            }
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(22.dp))
+
+            // 5. Section: Permissions Card (Opens Dedicated Page)
             SectionHeader(title = "Permissions & Privacy")
 
             val hasWriteSettings = canWriteSystemSettings(context)

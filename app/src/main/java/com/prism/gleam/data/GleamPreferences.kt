@@ -17,6 +17,7 @@ object GleamPreferences {
     private const val KEY_CUSTOM_FLOOR = "custom_floor_value"
     private const val KEY_MIN_BRIGHTNESS = "min_brightness_percent"
     private const val KEY_MAX_BRIGHTNESS = "max_brightness_percent"
+    private const val KEY_HAPTIC_FEEDBACK = "is_haptic_feedback_enabled"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -92,6 +93,15 @@ object GleamPreferences {
 
     fun setMaxBrightness(context: Context, value: Int) {
         getPrefs(context).edit().putInt(KEY_MAX_BRIGHTNESS, value.coerceIn(0, 100)).apply()
+    }
+
+    // Vibration / Haptic Feedback Toggle (Default: true)
+    fun isHapticFeedback(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_HAPTIC_FEEDBACK, true)
+    }
+
+    fun setHapticFeedback(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_HAPTIC_FEEDBACK, enabled).apply()
     }
 
     // Notification Shade Quick Tile Request Listening State

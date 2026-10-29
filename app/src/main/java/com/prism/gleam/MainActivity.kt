@@ -12,6 +12,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -38,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
@@ -83,6 +86,12 @@ class MainActivity : ComponentActivity() {
                 themeMode = themeMode,
                 isAmoled = isAmoled
             ) {
+                val canvasColor = GleamTheme.colors.canvas
+                DisposableEffect(canvasColor) {
+                    window.decorView.setBackgroundColor(canvasColor.toArgb())
+                    onDispose {}
+                }
+
                 GleamAppRoot(
                     themeMode = themeMode,
                     isAmoled = isAmoled,
@@ -115,70 +124,113 @@ fun GleamAppRoot(
     var isAutoBrightness by remember { mutableStateOf(GleamPreferences.isAutoBrightness(context)) }
     var minBrightness by remember { mutableIntStateOf(GleamPreferences.getMinBrightness(context)) }
     var maxBrightness by remember { mutableIntStateOf(GleamPreferences.getMaxBrightness(context)) }
+    var isHapticFeedback by remember { mutableStateOf(GleamPreferences.isHapticFeedback(context)) }
 
-    AnimatedContent(
-        targetState = currentScreen,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(180))
-        },
-        label = "AppScreenNavigation"
-    ) { screen ->
-        when (screen) {
-            AppScreen.MAIN -> {
-                GleamMainScreen(
-                    onOpenSettings = { currentScreen = AppScreen.SETTINGS },
-                    isAutoBrightness = isAutoBrightness
-                )
-            }
-            AppScreen.SETTINGS -> {
-                SettingsScreen(
-                    themeMode = themeMode,
-                    isAmoled = isAmoled,
-                    isAutoBrightness = isAutoBrightness,
-                    minBrightness = minBrightness,
-                    maxBrightness = maxBrightness,
-                    onThemeModeChange = onThemeModeChange,
-                    onAmoledChange = onAmoledChange,
-                    onAutoBrightnessChange = {
-                        isAutoBrightness = it
-                        GleamPreferences.setAutoBrightness(context, it)
-                        val activity = context as? android.app.Activity
-                        BrightnessController.setSystemAutoBrightness(context, activity, it)
-                    },
-                    onMinBrightnessChange = {
-                        minBrightness = it
-                        GleamPreferences.setMinBrightness(context, it)
-                    },
-                    onMaxBrightnessChange = {
-                        maxBrightness = it
-                        GleamPreferences.setMaxBrightness(context, it)
-                    },
-                    onNavigatePermissions = { currentScreen = AppScreen.PERMISSIONS },
-                    onNavigateFeedback = { currentScreen = AppScreen.FEEDBACK },
-                    onNavigatePrivacyPolicy = { currentScreen = AppScreen.PRIVACY_POLICY },
-                    onNavigateAbout = { currentScreen = AppScreen.ABOUT },
-                    onBack = { currentScreen = AppScreen.MAIN }
-                )
-            }
-            AppScreen.PERMISSIONS -> {
-                PermissionsScreen(
-                    onBack = { currentScreen = AppScreen.SETTINGS }
-                )
-            }
-            AppScreen.PRIVACY_POLICY -> {
-                PrivacyPolicyScreen(
-                    onBack = { currentScreen = AppScreen.SETTINGS }
-                )
-            }
-            AppScreen.ABOUT -> {
-                AboutScreen(
-                    onBack = { currentScreen = AppScreen.SETTINGS }
-                )
-            }
-            AppScreen.FEEDBACK -> {
-                FeedbackScreen(
-                    onBack = { currentScreen = AppScreen.SETTINGS }
-                )
+    val screenOrder = mapOf(
+        AppScreen.MAIN to 0,
+        AppScreen.SETTINGS to 1,
+        AppScreen.PERMISSIONS to 2,
+        AppScreen.FEEDBACK to 2,
+        AppScreen.PRIVACY_POLICY to 2,
+        AppScreen.ABOUT to 2
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GleamTheme.colors.canvas)
+    ) {
+        AnimatedContent(
+            targetState = currentScreen,
+            transitionSpec = {
+                val targetRank = screenOrder[targetState] ?: 0
+                val initialRank = screenOrder[initialState] ?: 0
+                val isForward = targetRank >= initialRank
+
+                if (isForward) {
+                    // Simple Left Slide: open new screen by sliding left
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+                    ) togetherWith slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+                    )
+                } else {
+                    // Simple Right Slide: page nav back by sliding right
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+                    ) togetherWith slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing)
+                    )
+                }
+            },
+            label = "AppScreenNavigation"
+        ) { screen ->
+            when (screen) {
+                AppScreen.MAIN -> {
+                    GleamMainScreen(
+                        onOpenSettings = { currentScreen = AppScreen.SETTINGS },
+                        isAutoBrightness = isAutoBrightness
+                    )
+                }
+                AppScreen.SETTINGS -> {
+                    SettingsScreen(
+                        themeMode = themeMode,
+                        isAmoled = isAmoled,
+                        isAutoBrightness = isAutoBrightness,
+                        minBrightness = minBrightness,
+                        maxBrightness = maxBrightness,
+                        isHapticFeedback = isHapticFeedback,
+                        onThemeModeChange = onThemeModeChange,
+                        onAmoledChange = onAmoledChange,
+                        onAutoBrightnessChange = {
+                            isAutoBrightness = it
+                            GleamPreferences.setAutoBrightness(context, it)
+                            val activity = context as? android.app.Activity
+                            BrightnessController.setSystemAutoBrightness(context, activity, it)
+                        },
+                        onMinBrightnessChange = {
+                            minBrightness = it
+                            GleamPreferences.setMinBrightness(context, it)
+                        },
+                        onMaxBrightnessChange = {
+                            maxBrightness = it
+                            GleamPreferences.setMaxBrightness(context, it)
+                        },
+                        onHapticFeedbackChange = {
+                            isHapticFeedback = it
+                            GleamPreferences.setHapticFeedback(context, it)
+                        },
+                        onNavigatePermissions = { currentScreen = AppScreen.PERMISSIONS },
+                        onNavigateFeedback = { currentScreen = AppScreen.FEEDBACK },
+                        onNavigatePrivacyPolicy = { currentScreen = AppScreen.PRIVACY_POLICY },
+                        onNavigateAbout = { currentScreen = AppScreen.ABOUT },
+                        onBack = { currentScreen = AppScreen.MAIN }
+                    )
+                }
+                AppScreen.PERMISSIONS -> {
+                    PermissionsScreen(
+                        onBack = { currentScreen = AppScreen.SETTINGS }
+                    )
+                }
+                AppScreen.PRIVACY_POLICY -> {
+                    PrivacyPolicyScreen(
+                        onBack = { currentScreen = AppScreen.SETTINGS }
+                    )
+                }
+                AppScreen.ABOUT -> {
+                    AboutScreen(
+                        onBack = { currentScreen = AppScreen.SETTINGS }
+                    )
+                }
+                AppScreen.FEEDBACK -> {
+                    FeedbackScreen(
+                        onBack = { currentScreen = AppScreen.SETTINGS }
+                    )
+                }
             }
         }
     }
