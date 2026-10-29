@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="#-how-to-install">Jump to Install</a> • <a href="#-screenshots">Screenshots</a>
+  <a href="#-how-to-install">Installation</a> • <a href="#-screenshots">Screenshots</a>
 </p>
 
 Gleam provides the fastest way to control your display auto-brightness. It operates 100% on-device with zero network permissions, letting you manage your screen brightness with a single tap.
@@ -32,13 +32,13 @@ Digging through **system menus** or **swiping down** multiple times just to togg
 ---
 
 ## # Screenshots
+> [!NOTE] 
+> [All Screenshots](.github/screenshots/Screenshots.md)
 
-> [.github/screenshots/Screenshots.md](.github/screenshots/Screenshots.md)
-
-| Home | Widget Settings | Widget | All Shortcuts |
-| :---: | :---: | :---: | :---: |
-| <img src=".github/screenshots/home.png" width="200" alt="Home" /> | <img src=".github/screenshots/widget-settings.png" width="200" alt="Widget Settings" /> | <img src=".github/screenshots/widget.png" width="200" alt="Widget" /> | <img src=".github/screenshots/all-shortcuts.png" width="200" alt="All Shortcuts" /> |
-
+| Home | Widget Settings |
+| :---: | :---: |
+| <img src=".github/screenshots/home.png" width="200" alt="Home" /> | <img src=".github/screenshots/widget-settings.png" width="200" alt="Widget Settings" /> |
+| <img src=".github/screenshots/widget.png" width="200" alt="Widget" /> | <img src=".github/screenshots/all-shortcuts.png" width="200" alt="All Shortcuts" /> |
 ---
 
 ## # Features
