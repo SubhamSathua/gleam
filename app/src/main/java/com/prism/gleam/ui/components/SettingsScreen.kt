@@ -158,7 +158,7 @@ fun SettingsScreen(
                         letterSpacing = (-0.4).sp
                     )
                     Text(
-                        text = "Preferences & Diagnostics",
+                        text = "App preferences & controls",
                         color = colors.textSub,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
@@ -168,19 +168,19 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(26.dp))
 
-            // 2. Section: Appearance & Themes
-            SectionHeader(title = "Appearance & Theme")
+            // 2. Section: Appearance
+            SectionHeader(title = "Appearance")
 
             SettingsCard {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "App Interface Theme",
+                        text = "Theme",
                         color = colors.textTitle,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Choose between porcelain glaze, dark obsidian, or match system",
+                        text = "Choose Light, Dark, or follow System",
                         color = colors.textSub,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(top = 2.dp, bottom = 14.dp)
@@ -239,13 +239,13 @@ fun SettingsScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Pure AMOLED Pitch Black",
+                                        text = "True Black (AMOLED)",
                                         color = colors.textTitle,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = "Uses pure #000000 background to maximize battery savings on OLED",
+                                        text = "Saves battery on OLED screens with pure black",
                                         color = colors.textSub,
                                         fontSize = 11.5.sp
                                     )
@@ -265,8 +265,8 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 3. Section: App Brightness Behavior
-            SectionHeader(title = "Display Control")
+            // 3. Section: Brightness
+            SectionHeader(title = "Brightness")
 
             SettingsCard {
                 Column {
@@ -285,7 +285,7 @@ fun SettingsScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Automatically boost screen in direct sunlight",
+                                text = "Automatically boost screen brightness in sunlight",
                                 color = colors.textSub,
                                 fontSize = 12.sp,
                                 modifier = Modifier.padding(top = 2.dp)
@@ -303,7 +303,7 @@ fun SettingsScreen(
 
                     SettingsDivider()
 
-                    // Minimum Brightness Floor
+                    // Minimum Brightness
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -315,7 +315,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Minimum Brightness Floor",
+                                text = "Minimum Brightness",
                                 color = colors.textTitle,
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.Bold
@@ -336,7 +336,7 @@ fun SettingsScreen(
                         }
 
                         Text(
-                            text = "Floor brightness applied in pitch darkness / 0 lx (Default: 10%)",
+                            text = "Lowest screen brightness in the dark (Default: 10%)",
                             color = colors.textSub,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 3.dp, bottom = 4.dp)
@@ -359,7 +359,7 @@ fun SettingsScreen(
 
                     SettingsDivider()
 
-                    // Maximum Brightness Ceiling
+                    // Maximum Brightness
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -371,7 +371,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Maximum Boost Ceiling",
+                                text = "Maximum Brightness",
                                 color = colors.textTitle,
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.Bold
@@ -392,7 +392,7 @@ fun SettingsScreen(
                         }
 
                         Text(
-                            text = "Peak hardware boost applied in direct sunlight / 35k+ lx (Default: 100%)",
+                            text = "Highest screen boost in bright sunlight (Default: 100%)",
                             color = colors.textSub,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 3.dp, bottom = 4.dp)
@@ -417,8 +417,8 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 4. Section: Haptics & Vibration
-            SectionHeader(title = "Haptics & Vibration")
+            // 4. Section: Vibration
+            SectionHeader(title = "Vibration")
 
             SettingsCard {
                 Row(
@@ -436,7 +436,7 @@ fun SettingsScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Vibrate on power toggle and touch controls",
+                            text = "Vibrate when tapping buttons and toggles",
                             color = colors.textSub,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 2.dp)
@@ -457,8 +457,8 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 5. Section: Permissions Card (Opens Dedicated Page)
-            SectionHeader(title = "Permissions & Privacy")
+            // 5. Section: Permissions
+            SectionHeader(title = "Permissions")
 
             val hasWriteSettings = canWriteSystemSettings(context)
             val hasNotifications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -482,7 +482,7 @@ fun SettingsScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "System Permissions",
+                                text = "App Permissions",
                                 color = colors.textTitle,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold
@@ -506,7 +506,7 @@ fun SettingsScreen(
                             }
                         }
                         Text(
-                            text = "Brightness write, haptic vibration & status tile links",
+                            text = "Allow Gleam to adjust screen brightness",
                             color = colors.textSub,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 2.dp)
@@ -519,15 +519,15 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 5. Section: About, Privacy & Feedback
-            SectionHeader(title = "About & Information")
+            // 6. Section: More Info
+            SectionHeader(title = "More Info")
 
             SettingsCard {
                 Column(modifier = Modifier.padding(vertical = 6.dp)) {
-                    // Send Feedback (Dedicated Feedback page with description & email)
+                    // Send Feedback
                     SettingsActionRow(
-                        title = "Send Feedback & Bug Reports",
-                        subtitle = "Email the development team with device diagnostics",
+                        title = "Send Feedback",
+                        subtitle = "Report an issue or suggest a feature",
                         onClick = {
                             GleamHaptics.playSubtleClick(view)
                             onNavigateFeedback()
@@ -539,7 +539,7 @@ fun SettingsScreen(
                     // Privacy Policy Page
                     SettingsActionRow(
                         title = "Privacy Policy",
-                        subtitle = "100% on-device • Zero network permissions",
+                        subtitle = "No data collected • 100% private & offline",
                         onClick = {
                             GleamHaptics.playSubtleClick(view)
                             onNavigatePrivacyPolicy()
@@ -551,7 +551,7 @@ fun SettingsScreen(
                     // About Page
                     SettingsActionRow(
                         title = "About Gleam",
-                        subtitle = "Version ${AppConstants.APP_VERSION} • Open Source & Architecture",
+                        subtitle = "Version ${AppConstants.APP_VERSION} • Open source license & info",
                         onClick = {
                             GleamHaptics.playSubtleClick(view)
                             onNavigateAbout()

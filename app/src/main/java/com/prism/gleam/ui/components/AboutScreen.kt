@@ -149,7 +149,7 @@ fun AboutScreen(
                         letterSpacing = (-0.4).sp
                     )
                     Text(
-                        text = "Architecture & Open Source",
+                        text = "App info & open source license",
                         color = colors.textSub,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
@@ -230,7 +230,7 @@ fun AboutScreen(
                         letterSpacing = (-0.5).sp
                     )
                     Text(
-                        text = "Adaptive Sunlight Backlight Engine",
+                        text = "Smart Sunlight Brightness Booster",
                         color = colors.textSub,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
@@ -258,8 +258,8 @@ fun AboutScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 2. Hardware Sensor Diagnostics Card
-            SectionTitle(title = "Hardware Sensor Diagnostics")
+            // 2. Light Sensor Info Card
+            SectionTitle(title = "Light Sensor Info")
 
             Box(
                 modifier = Modifier
@@ -275,20 +275,20 @@ fun AboutScreen(
                     .padding(18.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    DiagnosticRow(label = "Sensor Model", value = sensorName)
+                    DiagnosticRow(label = "Sensor Name", value = sensorName)
                     DiagnosticDivider()
-                    DiagnosticRow(label = "Hardware Vendor", value = sensorVendor)
+                    DiagnosticRow(label = "Manufacturer", value = sensorVendor)
                     DiagnosticDivider()
-                    DiagnosticRow(label = "Maximum Range", value = sensorMaxRange)
+                    DiagnosticRow(label = "Max Range", value = sensorMaxRange)
                     DiagnosticDivider()
-                    DiagnosticRow(label = "Operating Power", value = sensorPower)
+                    DiagnosticRow(label = "Power Usage", value = sensorPower)
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 4. Open Source Software (OSS) Section
-            SectionTitle(title = "Open Source Software (OSS)")
+            // 3. Open Source License Section
+            SectionTitle(title = "Open Source License")
 
             Box(
                 modifier = Modifier
@@ -310,21 +310,21 @@ fun AboutScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Licensed under ${AppConstants.OSS_LICENSE_NAME}",
+                            text = "Apache License 2.0",
                             color = colors.textTitle,
-                            fontSize = 14.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .background(Color(0xFF10B981).copy(alpha = 0.15f))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .padding(horizontal = 9.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = "OSS",
+                                text = "Free & Open Source",
                                 color = Color(0xFF10B981),
-                                fontSize = 10.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -333,11 +333,34 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "Gleam is completely free, open-source software built for transparency and user privacy. You are free to inspect, modify, and redistribute the source code.",
+                        text = "Gleam is 100% free software. You can use it, inspect the code, modify it, or share it freely with anyone.",
                         color = colors.textSub,
-                        fontSize = 12.5.sp,
-                        lineHeight = 17.sp
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
                     )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Simple License Points
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(colors.canvas)
+                            .padding(14.dp)
+                    ) {
+                        Text(
+                            text = "What this means for you:",
+                            color = colors.textTitle,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LicensePoint(icon = "✓", text = "Free for everyone to use and share", isPositive = true)
+                        LicensePoint(icon = "✓", text = "Source code is completely open to inspect", isPositive = true)
+                        LicensePoint(icon = "✓", text = "You can modify and build your own version", isPositive = true)
+                        LicensePoint(icon = "ℹ", text = "Provided as-is without warranty", isPositive = false)
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -353,78 +376,34 @@ fun AboutScreen(
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.GITHUB_REPO_URL))
                                 context.startActivity(intent)
                             }
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "View Source on GitHub ↗",
                             color = colors.primaryAccent,
-                            fontSize = 12.5.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Selectable License Text Block
-                    Text(
-                        text = "FULL LICENSE TEXT",
-                        color = colors.textMuted,
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    SelectionContainer {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(colors.canvas.copy(alpha = 0.85f))
-                                .padding(12.dp)
-                        ) {
-                            Text(
-                                text = """
-Copyright 2026 Prism Labs & Gleam Contributors
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-                                """.trimIndent(),
-                                color = colors.textSub,
-                                fontSize = 10.5.sp,
-                                fontFamily = FontFamily.Monospace,
-                                lineHeight = 14.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     Text(
-                        text = "THIRD-PARTY LIBRARIES",
+                        text = "LIBRARIES USED",
                         color = colors.textMuted,
-                        fontSize = 10.5.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        letterSpacing = 0.8.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "• Jetpack Compose & Material 3 (Apache 2.0 - Google LLC)\n" +
-                               "• AndroidX Core KTX & Lifecycle (Apache 2.0 - AOSP)\n" +
-                               "• KotlinX Coroutines (Apache 2.0 - JetBrains s.r.o.)",
+                        text = "• Jetpack Compose & Material 3 (UI)\n" +
+                               "• AndroidX Core & Lifecycle (System)\n" +
+                               "• Kotlin Coroutines (Background tasks)",
                         color = colors.textSub,
-                        fontSize = 11.5.sp,
-                        lineHeight = 17.sp
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp
                     )
                 }
             }
@@ -484,4 +463,26 @@ private fun DiagnosticDivider() {
             .height(1.dp)
             .background(colors.trackBackground.copy(alpha = 0.5f))
     )
+}
+
+@Composable
+private fun LicensePoint(icon: String, text: String, isPositive: Boolean) {
+    val colors = GleamTheme.colors
+    Row(
+        modifier = Modifier.padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = icon,
+            color = if (isPositive) Color(0xFF10B981) else colors.textSub,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(18.dp)
+        )
+        Text(
+            text = text,
+            color = colors.textSub,
+            fontSize = 12.sp
+        )
+    }
 }
