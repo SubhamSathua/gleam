@@ -235,13 +235,25 @@ fun ScaleDialView(
             if (isPoweredOn && activeSweep > 0.5f) {
                 // Reversed Gradient: Start is LIGHTER (Peach Light), End at Knob is DARKER (Solar Orange)
                 val kRatio = (activeSweep / 360f).coerceIn(0.005f, 1.0f)
+
+                // Cap margin in angular fraction (~16 degrees) to ensure the round caps (StrokeCap.Round)
+                // extending beyond 0° and activeSweep are fully colored rather than clipped by sweep gradient
+                val capMargin = 0.045f
+                val endCapRatio = (kRatio + capMargin).coerceAtMost(0.85f)
+                val endFadeRatio = (endCapRatio + 0.01f).coerceAtMost(0.88f)
+                val startCapRatio = (1.0f - capMargin)
+                val startFadeRatio = startCapRatio - 0.01f
+
                 val arcBrush = Brush.sweepGradient(
                     0.000f to colors.primaryPeachLight,
                     kRatio * 0.35f to colors.primaryPeach,
                     kRatio * 0.70f to colors.primaryBright,
                     kRatio * 1.00f to colors.primaryAccent,
-                    (kRatio * 1.001f).coerceAtMost(1f) to Color.Transparent,
-                    1.000f to Color.Transparent,
+                    endCapRatio to colors.primaryAccent,
+                    endFadeRatio to Color.Transparent,
+                    startFadeRatio to Color.Transparent,
+                    startCapRatio to colors.primaryPeachLight,
+                    1.000f to colors.primaryPeachLight,
                     center = center
                 )
 
