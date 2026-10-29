@@ -57,3 +57,7 @@ desktop.ini
 Dev-LAB/
 Dev-LAB
 powershell.bat
+.github/releases/*
+!.github/releases/*.md
+.idea/
+.kotlin/sessions/
