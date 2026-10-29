@@ -6,7 +6,7 @@ The following versions of Gleam are currently supported with security updates:
 
 | Version   | Supported |
 | --------- | --------- |
-| 1.0.0-pro | Supported |
+| 1.0.0     | Supported |
 
 ## Reporting a Vulnerability
 
