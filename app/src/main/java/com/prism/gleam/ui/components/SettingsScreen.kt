@@ -12,8 +12,10 @@ import android.os.PowerManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -47,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -673,32 +676,67 @@ private fun GleamSwitch(
     onCheckedChange: (Boolean) -> Unit
 ) {
     val colors = GleamTheme.colors
-    val thumbOffset by animateDpAsState(
-        targetValue = if (checked) 22.dp else 2.dp,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
-        label = "SwitchThumb"
+    val animProgress by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "SwitchProgress"
     )
 
-    Box(
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) colors.primaryAccent else colors.trackBackground,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "SwitchTrackColor"
+    )
+
+    Canvas(
         modifier = Modifier
             .size(width = 48.dp, height = 28.dp)
-            .clip(CircleShape)
-            .background(if (checked) colors.primaryAccent else colors.trackBackground)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = { onCheckedChange(!checked) }
             )
-            .padding(2.dp),
-        contentAlignment = Alignment.CenterStart
     ) {
-        Box(
-            modifier = Modifier
-                .offset(x = thumbOffset)
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(Color.White)
-                .shadow(elevation = 2.dp, shape = CircleShape)
+        val corner = CornerRadius(size.height / 2f, size.height / 2f)
+
+        // 1. Capsule Track (smoothly transitions between trackBackground and primaryAccent)
+        drawRoundRect(
+            color = trackColor,
+            size = size,
+            cornerRadius = corner
+        )
+
+        // 2. Mathematically centered circular thumb (symmetric 3dp margins on all 4 sides)
+        val thumbRadius = 11.dp.toPx()
+        val margin = 3.dp.toPx()
+        val minX = margin + thumbRadius
+        val maxX = size.width - margin - thumbRadius
+        val currentThumbX = minX + (maxX - minX) * animProgress
+        val thumbCenter = Offset(currentThumbX, size.height / 2f)
+
+        // Soft natural drop shadow under thumb (eliminates Skia RenderNode elevation polygon artifacts)
+        drawCircle(
+            color = Color.Black.copy(alpha = 0.16f),
+            radius = thumbRadius + 0.6.dp.toPx(),
+            center = Offset(thumbCenter.x, thumbCenter.y + 0.8.dp.toPx())
+        )
+        drawCircle(
+            color = Color.Black.copy(alpha = 0.08f),
+            radius = thumbRadius + 1.2.dp.toPx(),
+            center = Offset(thumbCenter.x, thumbCenter.y + 1.2.dp.toPx())
+        )
+
+        // Pure smooth white circular knob
+        drawCircle(
+            color = Color.White,
+            radius = thumbRadius,
+            center = thumbCenter
         )
     }
 }
